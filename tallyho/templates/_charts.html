@@ -25,6 +25,7 @@
         {% if chart.area %}<path class="area" d="{{ chart.area }}"></path>{% endif %}
         {% if chart.compare %}<path class="series series-compare" d="{{ chart.compare }}"></path>{% endif %}
         {% if chart.avg %}<path class="series series-avg" d="{{ chart.avg }}"></path>{% endif %}
+        {% if chart.second %}<path class="series series-second" d="{{ chart.second }}"></path>{% endif %}
         {% if chart.main %}<path class="series series-main" d="{{ chart.main }}"></path>{% endif %}
         {% if chart.end %}<circle class="end-dot" cx="{{ chart.end.x|round(1) }}" cy="{{ chart.end.y|round(1) }}" r="4"></circle>{% endif %}
         <line class="crosshair" x1="0" x2="0" y1="{{ chart.top }}" y2="{{ chart.bottom }}" hidden></line>

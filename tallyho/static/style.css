@@ -567,6 +567,8 @@ td.main-cell { font-weight: 600; }
 .kpis { display: grid; gap: 0.75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (min-width: 48rem) { .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (min-width: 80rem) { .kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (min-width: 64rem) { .kpis-plain { grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); } }
+.kpis-plain .kpi { min-height: 6rem; padding-bottom: 0.875rem; }
 .kpi {
   position: relative; display: grid; align-content: start; gap: 0.25rem; min-height: 7.5rem;
   padding: 0.875rem 1rem 2.25rem; background: var(--surface); border: 1px solid var(--border);
@@ -616,6 +618,7 @@ td.main-cell { font-weight: 600; }
 .chart-svg .series-main { stroke: var(--chart-1); }
 .chart-svg .series-avg { stroke: var(--chart-avg); }
 .chart-svg .series-compare { stroke: var(--chart-compare); opacity: 0.9; }
+.chart-svg .series-second { stroke: var(--cat-2); }
 .chart-svg .end-dot, .chart-svg .hover-dot { fill: var(--chart-1); stroke: var(--surface); stroke-width: 2; }
 .chart-svg .crosshair { stroke: var(--border-strong); stroke-width: 1; }
 .chart-svg .hit { fill: transparent; }
@@ -627,6 +630,7 @@ td.main-cell { font-weight: 600; }
 .key-main, .key-mark { background: var(--chart-1); }
 .key-avg { background: var(--chart-avg); }
 .key-compare { background: var(--chart-compare); }
+.key-second { background: var(--cat-2); }
 
 .tooltip {
   position: absolute; z-index: 30; pointer-events: none; min-width: 9rem; max-width: 16rem;
@@ -667,3 +671,32 @@ td.main-cell { font-weight: 600; }
 .share-fill { fill: var(--chart-1); }
 .share .num { min-width: 3rem; text-align: right; color: var(--muted); }
 .share-col { width: 22%; }
+
+/* ---------- Products, Customers ---------- */
+
+.people-list { display: grid; gap: 0.125rem; font-size: 0.875rem; }
+.people-list li {
+  display: flex; align-items: center; gap: 0.625rem; padding: 0.375rem 0.25rem; border-bottom: 1px solid var(--border);
+}
+.people-list li:last-child { border-bottom: 0; }
+.people-list > li > a, .people-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.people-name { display: flex; align-items: center; gap: 0.375rem; }
+.people-list .num { white-space: nowrap; font-weight: 600; }
+.person-head { display: flex; align-items: center; gap: 0.875rem; }
+.person-head .avatar { width: 3rem; height: 3rem; font-size: 1.25rem; }
+
+.heat-scroll { overflow-x: auto; }
+.heatmap { border-collapse: separate; border-spacing: 2px; width: 100%; min-width: 34rem; }
+.heatmap th, .heatmap td { padding: 0; border: 0; background: none; }
+.heatmap thead th { font-size: 0.6875rem; font-weight: 500; color: var(--muted); text-align: left; height: 1.25rem; white-space: nowrap; }
+.heatmap tbody th { font-size: 0.75rem; font-weight: 600; color: var(--muted); padding-right: 0.5rem; width: 2.5rem; }
+.heatmap td.heat { height: 1.75rem; border-radius: 4px; cursor: default; }
+.heatmap tbody tr:hover td { background: none; }
+.heat-0 { background: var(--heat-0) !important; } .heat-1 { background: var(--heat-1) !important; }
+.heat-2 { background: var(--heat-2) !important; } .heat-3 { background: var(--heat-3) !important; }
+.heat-4 { background: var(--heat-4) !important; } .heat-5 { background: var(--heat-5) !important; }
+.heatmap td.heat:hover, .heatmap td.heat:focus-visible { outline: 2px solid var(--text); outline-offset: -1px; }
+.heat-legend { display: flex; align-items: center; gap: 3px; margin-top: 0.625rem; font-size: 0.75rem; color: var(--muted); }
+.heat-legend i { display: inline-block; width: 1.25rem; height: 0.75rem; border-radius: 3px; }
+.heat-legend span:first-child { margin-right: 0.375rem; }
+.heat-legend span:last-child { margin-left: 0.375rem; }

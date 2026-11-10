@@ -60,7 +60,8 @@ def money_scale(top_centavos, ticks=4):
     return top * 100, [v * 100 for v in values]
 
 
-def line_chart(points, kind="money", width=1000, height=300, compare=False, average=False, max_labels=8):
+def line_chart(points, kind="money", width=1000, height=300, compare=False, average=False, max_labels=8,
+               second=False):
     """points: [{"label", "value", "compare"?, "avg"?, "tip"}] in time order.
 
     Returns everything _charts.html needs: paths, axis ticks, x labels and hover columns.
@@ -70,6 +71,7 @@ def line_chart(points, kind="money", width=1000, height=300, compare=False, aver
     values = [p.get("value") for p in points]
     values += [p.get("compare") for p in points] if compare else []
     values += [p.get("avg") for p in points] if average else []
+    values += [p.get("second") for p in points] if second else []
     biggest = max([v for v in values if v is not None] or [0])
     if kind == "money":
         axis_top, ticks = money_scale(biggest)
@@ -129,17 +131,18 @@ def line_chart(points, kind="money", width=1000, height=300, compare=False, aver
         "width": width, "height": height, "left": left, "right": width - right, "top": top_pad,
         "bottom": top_pad + plot_h, "main": main, "area": area,
         "compare": path("compare") if compare else "", "avg": path("avg") if average else "",
+        "second": path("second") if second else "",
         "y_ticks": [{"y": y_at(t), "text": fmt(kind, t, short=True)} for t in ticks],
         "x_labels": x_labels, "columns": columns, "end": end,
     }
 
 
-def line_charts(points, kind="money", compare=False, average=False):
+def line_charts(points, kind="money", compare=False, average=False, second=False):
     """The same chart twice: wide for computers, compact for phones (CSS shows one).
     An SVG scales its text with it, so one drawing can't be readable at both sizes."""
-    return {"wide": line_chart(points, kind, compare=compare, average=average),
+    return {"wide": line_chart(points, kind, compare=compare, average=average, second=second),
             "narrow": line_chart(points, kind, width=360, height=240, compare=compare, average=average,
-                                 max_labels=4)}
+                                 max_labels=4, second=second)}
 
 
 def sparkline(values, width=100, height=28):

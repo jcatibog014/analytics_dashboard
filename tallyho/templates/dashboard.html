@@ -2,6 +2,7 @@
 {% from "_macros.html" import page_head %}
 {% from "_charts.html" import line, spark, bars, table_view, delta %}
 {% from "_filters.html" import filter_bar %}
+{% from "_kpis.html" import kpi_row %}
 {% from "_icons.html" import icon %}
 {% block title %}Dashboard - {{ APP_NAME }}{% endblock %}
 {% block head %}<script src="{{ url_for('static', filename='charts.js') }}" defer></script>{% endblock %}
@@ -10,22 +11,7 @@
   {{ filter_bar(sc, {'measure': measure if measure != 'revenue' else none}) }}
 
   {# The KPI tiles. Revenue leads, as the one big number. #}
-  <section class="kpis" aria-label="Key numbers">
-    {% for card in cards %}
-      <article class="kpi{% if loop.first %} kpi-hero{% endif %}">
-        <h2 class="kpi-label">{{ card.label }}
-          <span class="kpi-help" tabindex="0" title="{{ card.meaning }}">{{ icon('info', 14) }}<span class="visually-hidden">{{ card.meaning }}</span></span>
-        </h2>
-        <p class="kpi-value">{{ card.value|kpi_short(card.kind) }}</p>
-        <p class="kpi-foot">
-          {% if sc.choice.compare %}{{ delta(card, sc.compare_label) }}{% endif %}
-          {% if card.key == 'profit' and now.margin is not none %}<span class="muted">{{ now.margin|percent }} margin</span>{% endif %}
-          {% if card.key == 'customers' %}<span class="muted">{{ now.new_customers|number }} new</span>{% endif %}
-        </p>
-        {{ spark(card.spark) }}
-      </article>
-    {% endfor %}
-  </section>
+  {{ kpi_row(cards, sc, now, hero=True) }}
 
   <section class="card section trend-card">
     <div class="card-head">

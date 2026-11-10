@@ -210,6 +210,12 @@ def change(now, before):
     return (now - before) / abs(before)
 
 
+def pick(cards, keys):
+    """These cards, in this order."""
+    by_key = {card["key"]: card for card in cards}
+    return [by_key[key] for key in keys if key in by_key]
+
+
 def kpi_cards(now, before, sparks=None):
     """What the KPI tiles show: value, change, whether that change is good, and a sparkline."""
     cards = []
@@ -424,3 +430,60 @@ def choices(s, ws, version):
         out[name] = [(row.id, row.name) for row in s.execute(
             text(f"SELECT id, name FROM {table} WHERE workspace_id = :ws ORDER BY name"), {"ws": ws})]
     return out
+
+
+# ---------- Drilling down ----------
+
+def with_change(rows, old_rows, key="id", measure="revenue"):
+    """Add each row's change against the same row in the earlier period (None if it is new)."""
+    before = {row[key]: row for row in old_rows or []}
+    for row in rows:
+        old = before.get(row[key])
+        row["before"] = old[measure] if old else None
+        row["change"] = change(row[measure], old[measure]) if old else None
+    return rows
+
+
+@memo
+def top_customers(s, f, limit=10):
+    """The customers who spent the most in these dates (with a product or category: on it)."""
+    d = sql.name_of(s)
+    src = make_source(d, f, "raw")
+    orders = "COUNT(DISTINCT o.id)"
+    query = f"""
+        SELECT c.id, c.name, c.code, c.first_order_date, {orders} AS orders,
+               {src.sums['revenue']} AS revenue, {src.sums['units']} AS units, MAX(o.order_date) AS last_order
+        FROM {src.tables}
+        WHERE {' AND '.join(src.where)} AND o.customer_id IS NOT NULL
+        GROUP BY c.id, c.name, c.code, c.first_order_date
+        ORDER BY revenue DESC, c.name
+        LIMIT :limit
+    """
+    rows = []
+    for row in s.execute(text(query), params_for(f, limit=limit)).mappings():
+        item = dict(row)
+        item["first_order_date"] = sql.as_date(item["first_order_date"])
+        item["last_order"] = sql.as_date(item["last_order"])
+        item["revenue"], item["units"], item["orders"] = int(item["revenue"] or 0), int(item["units"] or 0), \
+            int(item["orders"])
+        item["is_new"] = item["first_order_date"] is not None and item["first_order_date"] >= f.first
+        item["initial"] = (str(item["name"] or "?").strip()[:1] or "?").upper()
+        rows.append(item)
+    return rows
+
+
+@memo
+def heatmap(s, f):
+    """Orders by weekday (0 = Monday) and hour, for orders whose file had a time."""
+    d = sql.name_of(s)
+    src = make_source(d, f, "raw")
+    weekday = sql.weekday(d, "o.order_date")
+    query = f"""
+        SELECT {weekday} AS weekday, o.order_hour AS hour, COUNT(DISTINCT o.id) AS orders,
+               {src.sums['revenue']} AS revenue
+        FROM {src.tables}
+        WHERE {' AND '.join(src.where)} AND o.order_hour IS NOT NULL
+        GROUP BY {weekday}, o.order_hour
+    """
+    return {(int(r["weekday"]), int(r["hour"])): {"orders": int(r["orders"]), "revenue": int(r["revenue"] or 0)}
+            for r in s.execute(text(query), params_for(f)).mappings()}

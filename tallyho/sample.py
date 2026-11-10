@@ -123,10 +123,10 @@ def generate(start, end, orders_per_day=24, seed=7, prefix="KC"):
         for _ in range(count):
             number += 1
             channel = _weighted(rng, channel_weights)
-            # About 6 in 10 orders come from a customer who bought before.
+            # About 6 in 10 orders come from a customer who bought before. Older customers
+            # come back a bit more often (random() ** 1.6 leans towards the start of the list).
             if customers and rng.random() < 0.6:
-                code, name, region = customers[min(int(rng.paretovariate(1.15)) - 1, len(customers) - 1)
-                                               if rng.random() < 0.5 else rng.randrange(len(customers))]
+                code, name, region = customers[int(len(customers) * rng.random() ** 1.6)]
             else:
                 region = _weighted(rng, REGIONS)
                 code = f"C-{len(customers) + 1:05d}"

@@ -173,7 +173,11 @@ def breakdown_part(s, sc, dimension, title):
     rows = analytics.top_with_rest(analytics.breakdown(s, sc.filters, dimension), keep=6)
     drawn = charts.bars(rows)
     for row in drawn:
-        if row.get("id") is not None and dimension not in sc.chosen:
+        if row.get("id") is None or dimension in sc.chosen:
+            continue
+        if dimension == "category":
+            row["href"] = sc.url("explore.products", category=row["id"])  # drill down to its products
+        else:
             row["href"] = sc.url(**{dimension: row["id"]})
     table = [[row["name"], charts.fmt("money", row["revenue"]), charts.fmt("percent", row["share"]),
               charts.fmt("money", row["profit"])] for row in rows]
