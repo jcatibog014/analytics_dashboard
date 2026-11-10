@@ -45,7 +45,8 @@ test drops and makes the tables again.
   from `.github/workflows/tick.yml`: weekly email, alerts, demo clean-up), `demo.py` (Try Demo copies a
   hidden template workspace with INSERT ... SELECT, dates moved by whole weeks).
 - Templates: `base.html`, `_sidebar.html` (a link appears only when its endpoint exists: `has_page`),
-  `_macros.html`, `_icons.html` (inline SVG icons and the logo). `static/style.css` holds the
+  `_macros.html`, `_icons.html` (inline SVG icons; the logo is `static/icons/logo.svg`, and
+  `docs/make_icons.py` draws every app icon from it). `static/style.css` holds the
   "Clean analyst" tokens for light and dark (two dark blocks: device setting and Settings choice — change both).
 
 ## Rules

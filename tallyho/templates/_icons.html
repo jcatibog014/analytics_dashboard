@@ -1,12 +1,9 @@
 {# Line icons, drawn here so no icon font or outside file is needed. #}
 
-{# The app's mark: four tally marks and a slash, white on an indigo tile. docs/make_icons.py draws the same shape. #}
+{# The app's mark: rising bars and an arrow on a sky-blue tile (static/icons/logo.svg).
+   docs/make_icons.py draws the app icons from the same file. #}
 {% macro logo(size=30) %}
-  <svg class="logo-mark" width="{{ size }}" height="{{ size }}" viewBox="0 0 32 32" aria-hidden="true">
-    <rect width="32" height="32" rx="8" fill="#4f46e5"></rect>
-    <path d="M9.5 9v14M14 9v14M18.5 9v14M23 9v14" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round"></path>
-    <path d="M6.5 20.5L25.5 11.5" stroke="#c7d2fe" stroke-width="2.6" stroke-linecap="round"></path>
-  </svg>
+  <img class="logo-mark" src="{{ url_for('static', filename='icons/logo.svg') }}" width="{{ size }}" height="{{ size }}" alt="">
 {% endmacro %}
 
 {% macro icon(name, size=18) %}
