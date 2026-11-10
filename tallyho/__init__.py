@@ -30,6 +30,7 @@ CONTENT_SECURITY_POLICY = "; ".join([
     "font-src 'self'",
     "img-src 'self' data:",
     "connect-src 'self'",
+    "worker-src 'self'",  # the service worker, /sw.js (it makes Tally Ho! installable as an app)
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -71,7 +72,7 @@ def create_app(test_config=None):
         # Without it we'd use a SQLite file, and Render forgets files on every restart.
         raise RuntimeError("Set the DATABASE_URL environment variable on Render (Neon's connection string).")
 
-    from . import auth, db, formatting, goals, ranges, rollups, tick
+    from . import auth, db, demo, formatting, goals, ranges, rollups, tick
     from .views import data, explore, lab, main, reports
     from .views import goals as goal_views
 
@@ -84,8 +85,9 @@ def create_app(test_config=None):
     tick.init_app(app)
     goals.init_app(app)
     lab.init_app(app)
+    demo.init_app(app)
     # auth comes first: its before_request (load_user) must run before the others'.
-    for blueprint in (auth.bp, main.bp, explore.bp, reports.bp, goal_views.bp, data.bp, lab.bp, tick.bp):
+    for blueprint in (auth.bp, main.bp, explore.bp, reports.bp, goal_views.bp, data.bp, lab.bp, demo.bp, tick.bp):
         app.register_blueprint(blueprint)
 
     app.jinja_env.globals.update(
@@ -97,6 +99,13 @@ def create_app(test_config=None):
     @app.get("/healthz")
     def healthz():
         return "ok"
+
+    @app.get("/sw.js")
+    def service_worker():
+        # From the root, so it may look after every page of the site.
+        response = app.send_static_file("sw.js")
+        response.headers["Cache-Control"] = "no-cache"
+        return response
 
     @app.get("/favicon.ico")
     def favicon():

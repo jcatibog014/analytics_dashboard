@@ -132,3 +132,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// The phone app: the service worker (/sw.js) makes Tally Ho! installable.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      // Not a problem: the site works the same without it.
+    });
+  });
+}

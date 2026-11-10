@@ -352,3 +352,12 @@ def test_command_line_sample_and_import(app, tmp_path):
     result = runner.invoke(args=["make-sample", "--rows", "2000", "--days", "20"])
     assert result.exit_code == 0, result.output
     assert "lines a second" in result.output
+
+
+def test_an_import_shows_its_own_dates(app, owner):
+    import_csv(owner)  # March 1-3, customers C1, C2, C3
+    import_csv(owner, "Order,Date,SKU,Qty,Price,Customer\nN-1,2026-04-20,BN-1,1,320,C-1\n")
+    with app.app_context():
+        record = db.session().scalars(select(Import).order_by(Import.id.desc())).first()
+        # Not March 1 (the returning customer's first day): only this file's own date.
+        assert (record.first_day, record.last_day) == (date(2026, 4, 20), date(2026, 4, 20))

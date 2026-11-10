@@ -544,7 +544,10 @@ class Writer:
         self.customers = {code.lower(): [cid, name] for cid, code, name in s.execute(
             select(Customer.id, Customer.code, Customer.name).where(Customer.workspace_id == self.ws))}
         self.touched_customers = set()
+        # first..last: the days whose rollups must be worked out again (this import's days,
+        # replaced orders' days, and customers' old first days). added_*: this import's own dates.
         self.first = self.last = None
+        self.added_first = self.added_last = None
 
     def _names(self, model):
         return {name.lower(): id_ for id_, name in self.s.execute(
@@ -643,6 +646,10 @@ class Writer:
             if customer:
                 self.touched_customers.add(customer[0])
             self._see(order.order_date)
+            if self.added_first is None or order.order_date < self.added_first:
+                self.added_first = order.order_date
+            if self.added_last is None or order.order_date > self.added_last:
+                self.added_last = order.order_date
             order_rows.append({
                 "workspace_id": self.ws, "import_id": self.record.id, "order_no": order.order_no,
                 "order_date": order.order_date, "order_hour": order.hour,
@@ -678,8 +685,8 @@ class Writer:
             if old_first:
                 self._see(old_first)
             update_first_orders(self.s, self.ws, self.touched_customers)
-        self.record.first_day = self.first
-        self.record.last_day = self.last
+        self.record.first_day = self.added_first
+        self.record.last_day = self.added_last
         after_change(self.s, self.workspace, self.first, self.last)
 
 

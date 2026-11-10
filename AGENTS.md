@@ -30,6 +30,20 @@ test drops and makes the tables again.
 - Every row belongs to a **workspace**: the owner's one (`workspaces.main_workspace`), one per Try Demo,
   and the hidden demo template. Every query filters by `workspace_id`.
 - `auth.py`: login, the 5-tries lock, CSRF on every POST, Settings, `create-owner` / `set-password`.
+- `importer.py`: CSV/Excel -> checked rows -> orders, saved in batches by `Writer` (one transaction);
+  `undo_import`; `after_change` rebuilds the rollups (`rollups.py`), bumps `data_version` and runs
+  `AFTER_CHANGE` hooks (goals.py checks the alert rules). `sample.py` makes the Kape Corner sample.
+- `analytics.py`: the numbers, in hand-written SQL. `plan()` picks the source: `daily_order_stats`,
+  `daily_product_stats` or the raw `orders` / `order_lines` (category filters and distinct customers
+  always read raw). `source="raw"|"rollup"` forces one and skips the cache (`cache.py`, keyed by
+  `data_version`). `dialect.py` holds the SQLite/PostgreSQL date differences.
+- `ranges.py` (date presets, compare periods, grain) and `scope.py` (the page's range + filters).
+- `charts.py` makes chart geometry; `templates/_charts.html` draws it as SVG; `static/charts.js` adds
+  the hover layer. Colours were checked with the dataviz validator (light and dark).
+- `reports.py` (pivot with totals via UNION ALL, cohorts, 80/20), `goals.py` (pace, forecast, alerts),
+  `lab.py` + `views/lab.py` (Performance Lab, `flask benchmark`), `tick.py` (POST /tasks/tick, hourly
+  from `.github/workflows/tick.yml`: weekly email, alerts, demo clean-up), `demo.py` (Try Demo copies a
+  hidden template workspace with INSERT ... SELECT, dates moved by whole weeks).
 - Templates: `base.html`, `_sidebar.html` (a link appears only when its endpoint exists: `has_page`),
   `_macros.html`, `_icons.html` (inline SVG icons and the logo). `static/style.css` holds the
   "Clean analyst" tokens for light and dark (two dark blocks: device setting and Settings choice — change both).
@@ -41,4 +55,10 @@ test drops and makes the tables again.
   main button is last on the right. Theme and Log out live in Settings only. Minimal emoji.
 - Never put user input into SQL text: hand-written SQL uses bound parameters (`:name`).
 - A new model change needs a migration; `tests/test_migrations.py` fails if they differ.
+- Every page the demo opens must show an example (`tests/test_demo.py`); new features bring sample data
+  in `demo.fill_extras`.
+- A rollup only holds numbers that add up. Tests check rollups and raw sales agree (`test_analytics.py`).
+- Retake the README screenshots when a page changes (`docs/take_screenshots.py`, see its docstring);
+  `tests/test_readme.py` checks the README and the pictures match.
+- A new NOT NULL column needs a `server_default` in its migration (tables already have rows).
 - Commit messages and PR bodies are written to files (`git commit -F`, `gh pr create --body-file`).

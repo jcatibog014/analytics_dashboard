@@ -44,7 +44,7 @@
 
     {% set index = results.index %}
     <section class="card section">
-      <div class="card-head"><h2>What an Index Does</h2><p>The raw KPI query, with and without the index on (workspace, date)</p></div>
+      <div class="card-head"><h2>What an Index Does</h2><p>The raw KPI query, with and without the index on (workspace, date, customer)</p></div>
       <div class="stat-row">
         <div class="stat"><span>With the index</span><strong>{{ ms(index.with_ms) }}</strong></div>
         <div class="stat"><span>Pretending it's missing</span><strong>{{ ms(index.without_ms) }}</strong>

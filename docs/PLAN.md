@@ -125,3 +125,24 @@ main button last on the right, theme and Log out in Settings only, sidebar from 
   with screenshots; run the 1M-row benchmark locally and record it.
 - Push, confirm `origin` has the commit, open the PR with `gh pr create --body-file` (screenshots as raw URLs).
 - Afterwards (your steps): run the tests on an empty Neon branch, go live on Render + Neon.
+
+## Progress
+
+All 9 stages are in one pull request, a commit per stage.
+
+- [x] 1. Foundation
+- [x] 2. Import
+- [x] 3. Aggregation core
+- [x] 4. Dashboard
+- [x] 5. Compare & drill down
+- [x] 6. Reports & exports
+- [x] 7. Goals & alerts
+- [x] 8. Performance Lab (the first benchmark found two slow spots: distinct customers and the keyset
+      condition; migration 0006 and a sargable keyset fixed them, see docs/BENCHMARKS.md)
+- [x] 9. Demo, PWA, deploy, README
+
+Changes from the plan while building:
+- The demo is about 15 months at 20 orders a day (about 10,000 orders), at most 20 at once, to stay
+  well inside Neon's free 0.5 GB.
+- Profit Margin sits under Gross Profit instead of being a tile of its own (10 places, two full rows).
+- Still to do by the owner: run the tests on an empty Neon branch, go live (docs/DEPLOY.md).
