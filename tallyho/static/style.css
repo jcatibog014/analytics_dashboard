@@ -224,7 +224,7 @@ td.num, th.num { text-align: right; white-space: nowrap; }
   font-weight: 750; font-size: 1.1875rem; letter-spacing: -0.02em;
   color: var(--text) !important; text-decoration: none !important; white-space: nowrap;
 }
-.logo svg { flex: none; }
+.logo svg, .logo-mark { flex: none; }
 .menu-button {
   height: var(--control-height); padding: 0 0.875rem; border-radius: var(--radius);
   background: transparent; color: var(--sidebar-text); border: 1px solid var(--control-border);

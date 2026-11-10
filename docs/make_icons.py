@@ -1,12 +1,13 @@
-r"""Draw the app icon (tallyho/static/icons/): four tally marks and a slash, white on an indigo tile.
+r"""Draw the app icons (tallyho/static/icons/) from the logo, tallyho/static/icons/logo.svg.
 
-It is the same drawing as the logo in templates/_icons.html. Phones and browsers
-want PNG pictures in fixed sizes, plus favicon.ico. Run this again after
-changing the design. Like take_screenshots.py, it uses Playwright + Edge
-(Playwright isn't in requirements.txt: borrow another project's, or pip install playwright):
+The logo is the source: change it, then run this again. Phones and browsers want
+PNG pictures in fixed sizes, plus favicon.ico. Like take_screenshots.py, it uses
+Playwright + Edge (Playwright isn't in requirements.txt: borrow another
+project's, or pip install playwright):
 
     ..\expense_tracker\.venv\Scripts\python docs\make_icons.py
 """
+import re
 import struct
 from pathlib import Path
 
@@ -14,46 +15,47 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).parent.parent
 ICONS = ROOT / "tallyho" / "static" / "icons"
+LOGO = ICONS / "logo.svg"
 
-TILE = "#4f46e5"   # indigo stands out on light and dark browser tabs alike
-MARKS = "#ffffff"
-SLASH = "#c7d2fe"
-
-# (file, size, shape). "rounded" has see-through corners, for browser tabs and
-# installed apps. "square" fills every pixel: iPhones round the corners
-# themselves, and Android crops a "maskable" icon into its own shape.
+# (file, size, shape).
+#   "rounded": the logo as it is, with see-through corners (browser tabs, installed apps).
+#   "square": every pixel filled (iPhones round the corners themselves).
+#   "maskable": filled, with the drawing kept inside the middle 80%, because Android
+#               crops a maskable icon into its own shape (a circle, a squircle...).
 PNGS = [
     ("icon-32.png", 32, "rounded"),
     ("icon-192.png", 192, "rounded"),
     ("icon-512.png", 512, "rounded"),
-    ("icon-maskable-512.png", 512, "square"),
+    ("icon-maskable-512.png", 512, "maskable"),
     ("apple-touch-icon.png", 180, "square"),
 ]
 ICO_SIZES = (16, 32, 48)
+TILE = re.compile(r'<rect width="400" height="400" rx="92" fill="url\(#bg\)"/>')
+HIGHLIGHT = re.compile(r'<ellipse cx="200" cy="110"[^>]*/>')
 
 
-def page_html(size, shape):
-    radius = round(size * 0.25) if shape == "rounded" else 0
-    # A maskable icon can be cropped to a circle, so its drawing stays in the middle.
-    drawing = size * (0.8 if shape == "square" else 1)
-    return f"""<!doctype html>
-<style>
-  html, body {{ margin: 0; background: transparent; }}
-  .tile {{ width: {size}px; height: {size}px; background: {TILE}; border-radius: {radius}px;
-           display: flex; align-items: center; justify-content: center; overflow: hidden; }}
-</style>
-<div class="tile">
-  <svg width="{drawing}" height="{drawing}" viewBox="0 0 32 32">
-    <path d="M9.5 9v14M14 9v14M18.5 9v14M23 9v14" stroke="{MARKS}" stroke-width="2.4" stroke-linecap="round"/>
-    <path d="M6.5 20.5L25.5 11.5" stroke="{SLASH}" stroke-width="2.6" stroke-linecap="round"/>
-  </svg>
-</div>"""
+def logo_svg(size, shape):
+    """The logo's SVG text for one size and shape."""
+    svg = LOGO.read_text(encoding="utf-8")
+    svg = svg.replace('width="1024" height="1024"', f'width="{size}" height="{size}"')
+    if shape == "rounded":
+        return svg
+    square = '<rect width="400" height="400" fill="url(#bg)"/>'
+    if shape == "square":
+        return TILE.sub(square, svg)
+    # maskable: the full background and its soft highlight, then the drawing 80% as big, in the middle.
+    # (The highlight stays full size: shrunk, its edge would show as an oval inside the tile.)
+    highlight = HIGHLIGHT.search(svg).group(0)
+    body = HIGHLIGHT.sub("", svg[TILE.search(svg).end():svg.rindex("</svg>")], count=1)
+    return (svg[:TILE.search(svg).start()] + square + highlight + '<g transform="translate(40 40) scale(0.8)">'
+            + body + "</g></svg>")
 
 
 def render(browser, size, shape):
     page = browser.new_page(viewport={"width": size, "height": size})
-    page.set_content(page_html(size, shape))
-    png = page.locator(".tile").screenshot(omit_background=True)
+    page.set_content(f"""<!doctype html><style>html, body {{ margin: 0; background: transparent; }}
+        svg {{ display: block; }}</style>{logo_svg(size, shape)}""")
+    png = page.locator("svg").screenshot(omit_background=True)
     page.close()
     return png
 
@@ -70,7 +72,6 @@ def write_ico(path, pictures):
 
 
 def main():
-    ICONS.mkdir(exist_ok=True)
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(channel="msedge")
         for name, size, shape in PNGS:

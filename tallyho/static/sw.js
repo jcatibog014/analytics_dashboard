@@ -5,13 +5,14 @@
 // Nothing personal is cached: no pages, no numbers, nothing from forms.
 "use strict";
 
-const CACHE = "tallyho-v1"; // change the number when these files change
+const CACHE = "tallyho-v2"; // change the number when these files change
 const FILES = [
   "/static/style.css",
   "/static/app.js",
   "/static/charts.js",
   "/static/theme.js",
   "/static/icons/icon-192.png",
+  "/static/icons/logo.svg",
   "/static/fonts/inter-variable.woff2",
   "/static/offline.html",
 ];
