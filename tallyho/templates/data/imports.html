@@ -1,10 +1,12 @@
 {% extends "base.html" %}
 {% from "_macros.html" import csrf, page_head %}
 {% from "_icons.html" import icon %}
+{% from "_steps.html" import import_steps %}
 {% block title %}Import - {{ APP_NAME }}{% endblock %}
 {% block content %}
   {{ page_head('Import', 'Bring in your sales from a CSV or Excel file. One row is one line of an order.') }}
 
+  {{ import_steps(1) }}
   <div class="grid-wide-left">
     <section class="card">
       <div class="card-head"><h2>Upload a File</h2><p>CSV or Excel (.xlsx), up to {{ MAX_UPLOAD_MB }} MB</p></div>
@@ -15,10 +17,10 @@
           <span><strong>Choose a file</strong> or drop it here</span>
           <input type="file" name="file" accept=".csv,.txt,.tsv,.xlsx" required>
         </label>
-        <div class="form-actions"><button class="button" type="submit">Upload and match columns</button></div>
+        <div class="form-actions"><button class="button" type="submit">Upload &amp; map columns</button></div>
       </form>
-      <p class="card-note">Next you tell us which column is which. Orders already here are skipped, so importing
-        the same file twice is safe.</p>
+      <p class="card-note">Next you map the columns, then review what will be imported before anything is saved.
+        Orders already here are skipped, so importing the same file twice is safe.</p>
     </section>
 
     <section class="card">
@@ -42,7 +44,7 @@
   </div>
 
   <section class="section">
-    <div class="section-head"><h2>Import History</h2>{% if history %}<p>Undo takes away the orders an import added.</p>{% endif %}</div>
+    <div class="section-head"><h2>Import History</h2>{% if history %}<p>Revert import deletes the orders an import added.</p>{% endif %}</div>
     {% if history %}
       <div class="table-wrap">
         <table>
@@ -56,12 +58,12 @@
               <td class="num">{{ record.orders_added|number }}</td>
               <td class="num">{{ (record.orders_skipped + record.orders_replaced)|number }}</td>
               <td class="num">{% if record.rows_failed %}<span class="pill pill-warn">{{ record.rows_failed|number }}</span>{% else %}0{% endif %}</td>
-              <td>{% if record.status == 'done' %}<span class="pill pill-good">Imported</span>{% else %}<span class="pill">Undone</span>{% endif %}</td>
+              <td>{% if record.status == 'done' %}<span class="pill pill-good">Imported</span>{% else %}<span class="pill">Reverted</span>{% endif %}</td>
               <td class="num">
                 {% if record.status == 'done' %}
-                  <form method="post" action="{{ url_for('data.undo', import_id=record.id) }}" data-confirm="Remove the {{ record.orders_added|number }} orders this import added?">
+                  <form method="post" action="{{ url_for('data.undo', import_id=record.id) }}" data-confirm="Revert this import? Its {{ record.orders_added|number }} orders will be deleted, and this can't be undone.">
                     {{ csrf() }}
-                    <button class="button button-quiet button-tiny" type="submit">{{ icon('undo', 14) }} Undo</button>
+                    <button class="button button-danger button-tiny" type="submit">{{ icon('undo', 14) }} Revert import</button>
                   </form>
                 {% endif %}
               </td>

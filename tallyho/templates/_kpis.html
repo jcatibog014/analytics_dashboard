@@ -14,7 +14,7 @@
           {% if card.key == 'profit' and now.margin is not none %}<span class="muted">{{ now.margin|percent }} margin</span>{% endif %}
           {% if card.key == 'customers' and hero %}<span class="muted">{{ now.new_customers|number }} new</span>{% endif %}
         </p>
-        {{ spark(card.spark) }}
+        {{ spark(card.spark, card.key) }}
       </article>
     {% endfor %}
     {% if caller %}{{ caller() }}{% endif %}

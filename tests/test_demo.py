@@ -77,6 +77,7 @@ DEMO_PAGES = {
 
 
 def test_every_demo_page_shows_an_example(app, visitor):
+    post(visitor, "/settings", {"action": "developer", "developer_mode": "1"})  # for the Performance Lab
     for page, words in DEMO_PAGES.items():
         response = visitor.get(page)
         assert response.status_code == 200, page

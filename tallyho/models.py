@@ -61,6 +61,8 @@ class User(Base):
     # Monday of the week it was last sent for, so it goes out once per week.
     weekly_email: Mapped[bool] = mapped_column(Boolean, default=False)
     last_summary_week: Mapped[date | None] = mapped_column(Date)
+    # Shows the Performance Lab and each page's query timings (a tool for developers, so off at first).
+    developer_mode: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     workspace: Mapped[Workspace] = relationship(back_populates="users")

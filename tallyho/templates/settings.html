@@ -1,14 +1,17 @@
 {% extends "base.html" %}
-{% from "_macros.html" import csrf, field, page_head %}
+{% from "_macros.html" import csrf, field, page_head, switch %}
 {% block title %}Settings - {{ APP_NAME }}{% endblock %}
 {% block content %}
   {{ page_head('Settings') }}
+  {# The demo sees the account parts as examples, switched off. The server refuses its changes anyway. #}
+  {% set locked = 'disabled' if g.user.is_demo else '' %}
   <div class="settings">
-    {# The theme lives in the browser, so this needs JavaScript. app.js shows it. #}
-    <section class="setting" data-theme-settings hidden>
+    {# The theme lives in the browser, so this needs JavaScript. app.js shows it.
+       The sun/moon button at the top of the menu switches it too. #}
+    <section class="setting setting-compact" data-theme-settings hidden>
       <div class="setting-text">
         <h2>Appearance</h2>
-        <p>Device follows your phone or computer. This choice is saved on this device only.</p>
+        <p>Device follows your phone or computer. Saved on this device only.</p>
       </div>
       <fieldset class="theme-choice">
         <legend class="visually-hidden">Theme</legend>
@@ -18,37 +21,51 @@
       </fieldset>
     </section>
 
-    {# The demo sees these as examples, switched off. The server refuses its changes anyway. #}
-    {% set locked = 'disabled' if g.user.is_demo else '' %}
     <section class="setting">
       <div class="setting-text">
-        <h2>Business Name</h2>
-        <p>Shown at the top of the menu and on printed reports.</p>
+        <h2>Profile</h2>
+        <p>The business name is at the top of the menu and on printed reports. Your name is on reports you save.</p>
       </div>
       <form method="post">
         {{ csrf() }}
-        <input type="hidden" name="action" value="business">
+        <input type="hidden" name="action" value="profile">
         <fieldset class="stack plain-fieldset" {{ locked }}>
-          {{ field('business', 'Name', g.workspace.name, errors.business, attrs='required maxlength="80"') }}
-          <div class="form-actions"><button class="button" type="submit">Save name</button></div>
+          {{ field('business', 'Business name', g.workspace.name, errors.business, attrs='required maxlength="80"') }}
+          {{ field('name', 'Your name', g.user.name, errors.name, attrs='required maxlength="80"') }}
+          <div class="form-actions"><button class="button" type="submit">Save profile</button></div>
         </fieldset>
       </form>
     </section>
 
-    {% block more_settings %}{% include "_settings_more.html" ignore missing %}{% endblock %}
-
     <section class="setting">
       <div class="setting-text">
-        <h2>Your Name</h2>
-        <p>Shown in the menu and on reports you save.</p>
+        <h2>Weekly Email</h2>
+        <p>Every Monday, last week's numbers next to the week before, sent to {{ g.user.email }}.
+          {% if not mail_on %}Email isn't set up on this site yet, so nothing is sent for now.{% endif %}</p>
       </div>
       <form method="post">
         {{ csrf() }}
-        <input type="hidden" name="action" value="name">
+        <input type="hidden" name="action" value="weekly">
         <fieldset class="stack plain-fieldset" {{ locked }}>
-          {{ field('name', 'Name', g.user.name, errors.name, attrs='required maxlength="80"') }}
-          <div class="form-actions"><button class="button" type="submit">Save name</button></div>
+          {{ switch('weekly_email', 'Email me a summary every Monday', g.user.weekly_email) }}
+          <div class="form-actions"><button class="button" type="submit">Save changes</button></div>
         </fieldset>
+      </form>
+    </section>
+
+    <section class="setting">
+      <div class="setting-text">
+        <h2>Developer Mode</h2>
+        <p>Shows the Performance Lab (how fast each kind of query is) and how long the database worked on each page.
+          Handy for learning SQL; most people can leave it off.</p>
+      </div>
+      <form method="post">
+        {{ csrf() }}
+        <input type="hidden" name="action" value="developer">
+        <div class="stack">
+          {{ switch('developer_mode', 'Show the Performance Lab and query timings', g.user.developer_mode, auto=True) }}
+          <div class="form-actions"><button class="button" type="submit" data-auto-submit-button>Save changes</button></div>
+        </div>
       </form>
     </section>
 
@@ -64,7 +81,7 @@
           {{ field('current_password', 'Current password', '', errors.password_current, type='password', attrs='autocomplete="current-password" required') }}
           {{ field('new_password', 'New password', '', errors.new_password, type='password', hint='At least 8 characters', attrs='autocomplete="new-password" required') }}
           {{ field('confirm_password', 'New password again', type='password', attrs='autocomplete="new-password" required') }}
-          <div class="form-actions"><button class="button" type="submit">Change password</button></div>
+          <div class="form-actions"><button class="button" type="submit">Update password</button></div>
         </fieldset>
       </form>
     </section>
@@ -73,7 +90,7 @@
       <div class="setting-text">
         <h2>Your Account</h2>
         {% if g.user.is_demo %}
-          <p>You are using the demo, so the names and password above can't be changed.</p>
+          <p>You are using the demo, so the profile and password above can't be changed.</p>
         {% else %}
           <p>You are logged in as {{ g.user.email }}.</p>
         {% endif %}

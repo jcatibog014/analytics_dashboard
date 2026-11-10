@@ -40,9 +40,12 @@
         <ul class="people-list">
           {% for buyer in buyers %}
             <li>
-              {{ avatar(buyer, 'small') }}
-              <a href="{{ sc.url('explore.customer', customer_id=buyer.id) }}">{{ buyer.name }}</a>
-              <span class="num">{{ buyer.units|number }} &times; <small class="muted">{{ buyer.revenue|money }}</small></span>
+              {{ avatar(buyer) }}
+              <span class="people-name">
+                <span class="people-title"><a href="{{ sc.url('explore.customer', customer_id=buyer.id) }}">{{ buyer.name }}</a></span>
+                <small>{{ plural(buyer.units, 'bought', 'bought') }}</small>
+              </span>
+              <span class="people-amount num">{{ buyer.revenue|money }}</span>
             </li>
           {% endfor %}
         </ul>

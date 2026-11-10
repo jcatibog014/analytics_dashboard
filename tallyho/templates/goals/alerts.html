@@ -5,7 +5,7 @@
 {% block content %}
   {% call page_head('Alerts', 'Days that were far from the usual for that weekday. Checked after every import and every hour.') %}
     {% if unseen %}
-      <form method="post" action="{{ url_for('goals.mark_seen') }}">{{ csrf() }}<button class="button button-quiet" type="submit">{{ icon('check', 16) }} Mark all as seen</button></form>
+      <form method="post" action="{{ url_for('goals.mark_seen') }}">{{ csrf() }}<button class="button button-quiet" type="submit">{{ icon('check', 16) }} Mark all as read</button></form>
     {% endif %}
   {% endcall %}
 
@@ -15,7 +15,7 @@
         {% set kind = rule_kind(alert.rule) %}
         {% set went_down = alert.value < alert.expected %}
         <li class="card alert-item{% if alert.seen_at is none %} is-new{% endif %}">
-          <span class="alert-icon {{ 'bad' if went_down else 'good' }}">{{ icon('down' if went_down else 'up', 18) }}</span>
+          <span class="alert-icon {{ 'bad' if went_down else 'good' }}">{{ icon('down' if went_down else 'up', 26) }}</span>
           <div class="alert-text">
             <p><strong>{{ alert.day.strftime('%A') }}, {{ alert.day|nice_date }}</strong>:
               {{ subject(alert.rule) }} {{ verb(alert.rule, past=True) }} <strong>{{ kpi(alert.value|round|int, kind) }}</strong>,
@@ -23,7 +23,7 @@
             <p class="muted small">Rule: {{ describe(alert.rule) }}</p>
           </div>
           {% if alert.seen_at is none %}<span class="pill pill-accent">New</span>{% endif %}
-          <a class="button button-quiet button-small" href="{{ url_for('main.home', range='custom', **{'from': alert.day|iso, 'to': alert.day|iso}) }}">See the day</a>
+          <a class="button button-quiet button-small" href="{{ url_for('main.home', range='custom', **{'from': alert.day|iso, 'to': alert.day|iso}) }}">View details</a>
         </li>
       {% endfor %}
     </ul>

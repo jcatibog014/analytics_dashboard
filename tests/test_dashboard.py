@@ -31,7 +31,7 @@ def test_dashboard_shows_kpis_trend_and_breakdowns(stocked, owner):
     page = response.get_data(as_text=True)
     for text in ("Revenue", "Orders", "Average Order", "Gross Profit", "New Customers", "Returning Customers",
                  "Revenue by day", "7-day average", "Previous period", "Sales by Category", "Sales by Region",
-                 "Sales by Channel", "Top Products", "Show as table", "Coffee Beans", "Metro Manila"):
+                 "Sales by Channel", "Top Products", "View as table", "Coffee Beans", "Metro Manila"):
         assert text in page, text
     assert page.count('class="hit"') == 2 * 30  # a hover strip per day, in the wide and the phone drawing
     assert 'role="img"' in page and "Highest:" in page

@@ -12,9 +12,15 @@
 <aside class="sidebar">
   <div class="sidebar-top">
     <a class="logo" href="{{ url_for('main.home') }}">{{ logo() }} <span>{{ APP_NAME }}</span></a>
-    <button class="menu-button" type="button" data-menu-button aria-expanded="false" aria-controls="side-nav" hidden>
-      <span aria-hidden="true">&#9776;</span> Menu
-    </button>
+    <div class="sidebar-tools">
+      {# Light or dark in one click (JavaScript only; Settings has the same choice, with Device too). #}
+      <button class="theme-button" type="button" data-theme-button hidden title="Switch to dark mode" aria-label="Switch to dark mode">
+        <span class="icon-moon">{{ icon('moon', 17) }}</span><span class="icon-sun">{{ icon('sun', 17) }}</span>
+      </button>
+      <button class="menu-button" type="button" data-menu-button aria-expanded="false" aria-controls="side-nav" hidden>
+        <span aria-hidden="true">&#9776;</span> Menu
+      </button>
+    </div>
   </div>
   <div class="sidebar-menu" id="side-nav">
     <nav aria-label="Main">
@@ -34,7 +40,7 @@
       <ul class="side-links">
         {{ link('data.imports', 'Import', 'import', also=('data.upload', 'data.match', 'data.show_import')) }}
         {{ link('data.records', 'Records', 'records', also=('data.order',)) }}
-        {{ link('lab.index', 'Performance Lab', 'lab') }}
+        {% if g.user.developer_mode %}{{ link('lab.index', 'Performance Lab', 'lab') }}{% endif %}
       </ul>
     </nav>
     <div class="sidebar-foot">
