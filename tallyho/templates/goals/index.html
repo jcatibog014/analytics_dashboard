@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, page_head, empty %}
+{% from "_charts.html" import line %}
+{% from "_icons.html" import icon %}
+{% block title %}Goals - {{ APP_NAME }}{% endblock %}
+{% block head %}<script src="{{ url_for('static', filename='charts.js') }}" defer></script>{% endblock %}
+{% macro badge(result) %}
+  {% set name, tone, icon_name = status[result.status] %}
+  <span class="pill pill-{{ tone }}">{{ icon(icon_name, 12) }} {{ name }}</span>
+{% endmacro %}
+{% block content %}
+  {{ page_head('Goals', 'Set a target for the month. Pace follows your usual week, so a slow Monday is not a worry.') }}
+
+  <h2 class="section-title">{{ this_month|month_name }}</h2>
+  {% if current %}
+    <div class="goal-list">
+      {% for result in current %}
+        {% set goal = result.goal %}
+        <article class="card goal-card">
+          <div class="goal-head">
+            <div>
+              <h3>{{ measure_names[goal.measure] }}{% if goal.region %} &middot; {{ goal.region.name }}{% endif %}</h3>
+              <p class="muted small">Goal {{ kpi(goal.target, result.kind) }} &middot; {{ plural(result.days_left, 'day') }} left</p>
+            </div>
+            {{ badge(result) }}
+          </div>
+          <p class="goal-numbers"><strong>{{ kpi(result.done, result.kind) }}</strong> <span class="muted">so far, {{ result.share|percent(0) }} of the goal</span></p>
+          {# The meter: the fill is what's done; the tick is where the usual pace would be today. #}
+          <div class="meter meter-{{ status[result.status][1] }}" role="img"
+               aria-label="{{ result.share|percent(0) }} done; the usual pace would be {{ result.expected_share|percent(0) }} by today">
+            <svg aria-hidden="true">
+              <rect class="meter-track" width="100%" height="100%" rx="5"></rect>
+              <rect class="meter-fill" width="{{ ([result.share or 0, 1]|min * 100)|round(1) }}%" height="100%" rx="5"></rect>
+              <rect class="meter-pace" x="{{ ([result.expected_share or 0, 1]|min * 100)|round(1) }}%" y="-3" width="2" height="22"></rect>
+            </svg>
+          </div>
+          <dl class="goal-facts">
+            <div><dt>Expected by today</dt><dd>{{ kpi(result.expected|round|int, result.kind) }}</dd></div>
+            <div><dt>Forecast for the month</dt><dd class="{{ 'good' if result.forecast >= goal.target else 'bad' }}">{{ kpi(result.forecast|round|int, result.kind) }}</dd></div>
+            <div><dt>Still to go</dt><dd>{{ kpi([goal.target - result.done, 0]|max|round|int, result.kind) }}</dd></div>
+          </dl>
+          {{ line(result.chart, [('main', 'So far'), ('second', 'Pace to the goal'), ('compare', 'Forecast')], 'Progress towards the goal, day by day.') }}
+          <form method="post" action="{{ url_for('goals.delete', goal_id=goal.id) }}" class="goal-delete" data-confirm="Delete this goal?">
+            {{ csrf() }}<button class="link-button link-small" type="submit">Delete goal</button>
+          </form>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card"><p class="muted">No goals for this month yet. Set one below.</p></div>
+  {% endif %}
+
+  <section class="card section">
+    <div class="card-head"><h2>Set a Goal</h2><p>Setting the same goal again changes its target.</p></div>
+    {% if errors %}<p class="form-error">{{ errors.values()|join(' ') }}</p>{% endif %}
+    <form method="post" class="goal-form">
+      {{ csrf() }}
+      <label class="field"><span class="field-label">For</span>
+        <select name="measure">{% for key, name, _kind in measures %}<option value="{{ key }}"{% if key == form.measure %} selected{% endif %}>{{ name }}</option>{% endfor %}</select></label>
+      <label class="field"><span class="field-label">Month</span><input type="month" name="month" value="{{ form.month }}" required></label>
+      <label class="field"><span class="field-label">Target <span class="hint">pesos, or a number of orders</span></span><input type="text" inputmode="decimal" name="target" value="{{ form.target }}" placeholder="250,000" required></label>
+      <label class="field"><span class="field-label">Region</span>
+        <select name="region"><option value="">Everywhere</option>{% for id_, name in regions %}<option value="{{ id_ }}"{% if form.region == id_|string %} selected{% endif %}>{{ name }}</option>{% endfor %}</select></label>
+      <div class="form-actions"><button class="button" type="submit">Save goal</button></div>
+    </form>
+  </section>
+
+  {% if other %}
+    <section class="section">
+      <div class="section-head"><h2>Other Months</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Month</th><th>For</th><th class="num">Goal</th><th class="num">Done</th><th class="num">Of the goal</th><th>Result</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+          <tbody>
+          {% for result in other %}
+            <tr>
+              <td class="nowrap">{{ result.goal.month|month_name }}</td>
+              <td>{{ measure_names[result.goal.measure] }}{% if result.goal.region %} &middot; {{ result.goal.region.name }}{% endif %}</td>
+              <td class="num">{{ kpi(result.goal.target, result.kind) }}</td>
+              <td class="num">{{ kpi(result.done, result.kind) }}</td>
+              <td class="num">{{ result.share|percent(0) }}</td>
+              <td>{{ badge(result) }}</td>
+              <td class="num"><form method="post" action="{{ url_for('goals.delete', goal_id=result.goal.id) }}" data-confirm="Delete this goal?">{{ csrf() }}<button class="icon-button" type="submit" title="Delete">{{ icon('trash', 16) }}<span class="visually-hidden">Delete</span></button></form></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+{% endblock %}

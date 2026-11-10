@@ -316,3 +316,61 @@ class SavedReport(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     user: Mapped[User | None] = relationship()
+
+
+# ---------- Goals and alerts ----------
+
+class Goal(Base):
+    """A target for one month: revenue, orders or gross profit, for everything or one region."""
+    __tablename__ = "goals"
+    __table_args__ = {"sqlite_autoincrement": True}
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    workspace_id: Mapped[int] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
+    measure: Mapped[str] = mapped_column(String(16))        # revenue / orders / profit
+    month: Mapped[date] = mapped_column(Date)               # the 1st of the month
+    target: Mapped[int] = mapped_column(BigInteger)         # centavos for money, a count for orders
+    region_id: Mapped[int | None] = mapped_column(ForeignKey("regions.id", ondelete="CASCADE"))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    region: Mapped[Region | None] = relationship()
+
+
+class AlertRule(Base):
+    """ "Tell me when a day's revenue is more than 20% below the usual for that weekday." """
+    __tablename__ = "alert_rules"
+    __table_args__ = {"sqlite_autoincrement": True}
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    workspace_id: Mapped[int] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
+    measure: Mapped[str] = mapped_column(String(16))        # revenue / orders / aov / new_customers
+    direction: Mapped[str] = mapped_column(String(8), default="drop")  # drop / rise
+    percent: Mapped[int] = mapped_column(Integer, default=20)
+    region_id: Mapped[int | None] = mapped_column(ForeignKey("regions.id", ondelete="CASCADE"))
+    channel_id: Mapped[int | None] = mapped_column(ForeignKey("channels.id", ondelete="CASCADE"))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    region: Mapped[Region | None] = relationship()
+    channel: Mapped[Channel | None] = relationship()
+
+
+class Alert(Base):
+    """A day that broke a rule. One per rule and day (checking again replaces it)."""
+    __tablename__ = "alerts"
+    __table_args__ = (UniqueConstraint("rule_id", "day"), {"sqlite_autoincrement": True})
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    workspace_id: Mapped[int] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
+    rule_id: Mapped[int] = mapped_column(ForeignKey("alert_rules.id", ondelete="CASCADE"))
+    day: Mapped[date] = mapped_column(Date)
+    value: Mapped[float] = mapped_column(Float)      # what the day had
+    expected: Mapped[float] = mapped_column(Float)   # the usual for that weekday
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    seen_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+    rule: Mapped[AlertRule] = relationship()
+
+    @property
+    def change(self):
+        return (self.value - self.expected) / self.expected if self.expected else None

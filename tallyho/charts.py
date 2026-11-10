@@ -137,10 +137,11 @@ def line_chart(points, kind="money", width=1000, height=300, compare=False, aver
     }
 
 
-def line_charts(points, kind="money", compare=False, average=False, second=False):
+def line_charts(points, kind="money", compare=False, average=False, second=False, wide=1000):
     """The same chart twice: wide for computers, compact for phones (CSS shows one).
     An SVG scales its text with it, so one drawing can't be readable at both sizes."""
-    return {"wide": line_chart(points, kind, compare=compare, average=average, second=second),
+    return {"wide": line_chart(points, kind, width=wide, height=round(wide * 0.3), compare=compare, average=average,
+                               second=second, max_labels=8 if wide > 700 else 6),
             "narrow": line_chart(points, kind, width=360, height=240, compare=compare, average=average,
                                  max_labels=4, second=second)}
 

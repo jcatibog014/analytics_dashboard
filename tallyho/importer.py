@@ -718,12 +718,18 @@ def earliest_first_order(s, workspace_id, customer_ids):
     return min(days) if days else None
 
 
+# Other modules that must follow the sales (goals.py checks the alert rules): hook(s, workspace, first, last).
+AFTER_CHANGE = []
+
+
 def after_change(s, workspace, first, last):
     """Sales between first and last changed: everything built from them must follow."""
     from . import rollups
     from .workspaces import bump_data_version
     rollups.rebuild(s, workspace.id, first, last)
     bump_data_version(workspace)
+    for hook in AFTER_CHANGE:
+        hook(s, workspace, first, last)
 
 
 def new_record(s, workspace, user, filename, mode="skip"):

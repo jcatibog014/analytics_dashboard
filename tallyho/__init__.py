@@ -71,8 +71,9 @@ def create_app(test_config=None):
         # Without it we'd use a SQLite file, and Render forgets files on every restart.
         raise RuntimeError("Set the DATABASE_URL environment variable on Render (Neon's connection string).")
 
-    from . import auth, db, formatting, ranges, rollups, tick
+    from . import auth, db, formatting, goals, ranges, rollups, tick
     from .views import data, explore, main, reports
+    from .views import goals as goal_views
 
     db.init_app(app)
     auth.init_app(app)
@@ -81,16 +82,15 @@ def create_app(test_config=None):
     rollups.init_app(app)
     data.init_app(app)
     tick.init_app(app)
+    goals.init_app(app)
     # auth comes first: its before_request (load_user) must run before the others'.
-    for blueprint in (auth.bp, main.bp, explore.bp, reports.bp, data.bp, tick.bp):
+    for blueprint in (auth.bp, main.bp, explore.bp, reports.bp, goal_views.bp, data.bp, tick.bp):
         app.register_blueprint(blueprint)
 
     app.jinja_env.globals.update(
         APP_NAME=APP_NAME, TAGLINE=TAGLINE, MAX_UPLOAD_MB=MAX_UPLOAD_MB,
         # The menu shows a page only once it exists.
         has_page=lambda endpoint: endpoint in app.view_functions,
-        # Replaced by the alerts once they exist.
-        new_alert_count=lambda: 0,
     )
 
     @app.get("/healthz")
