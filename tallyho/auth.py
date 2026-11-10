@@ -247,6 +247,12 @@ def settings():
                 s.commit()
                 flash("The business name has been changed.")
                 return redirect(url_for("auth.settings"))
+        elif action == "weekly":
+            g.user.weekly_email = request.form.get("weekly_email") == "1"
+            s.commit()
+            flash("You'll get last week's numbers every Monday." if g.user.weekly_email
+                  else "No more weekly emails.")
+            return redirect(url_for("auth.settings"))
         elif action == "password":
             if not check_password_hash(g.user.password_hash, request.form.get("current_password", "")):
                 errors["password_current"] = "That isn't your current password."
@@ -263,7 +269,8 @@ def settings():
                 return redirect(url_for("auth.settings"))
         else:
             abort(400, "Choose something to change.")
-    return render_template("settings.html", errors=errors), 400 if errors else 200
+    from . import mailer
+    return render_template("settings.html", errors=errors, mail_on=mailer.enabled()), 400 if errors else 200
 
 
 # ---------- Command line ----------

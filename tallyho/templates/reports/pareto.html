@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_head, empty %}
+{% from "_filters.html" import filter_bar %}
+{% from "_icons.html" import icon %}
+{% block title %}80/20 Products - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  <a class="back-link no-print" href="{{ url_for('reports.index') }}">{{ icon('chevron-left', 16) }} Reports</a>
+  {{ page_head('80/20 Products', 'Often a few products bring in most of the money. Here is how few.') }}
+  <div class="no-print">{{ filter_bar(sc, show=('region', 'channel', 'category')) }}</div>
+
+  {% if result.rows %}
+    <div class="callout">
+      <p class="callout-number">{{ result.head }} <span>of {{ result.products }}</span></p>
+      <p><strong>{{ plural(result.head, 'product') }}</strong> ({{ (result.head / result.products)|percent(0) }} of them) bring in
+        <strong>80%</strong> of the revenue in these dates.</p>
+    </div>
+    <section class="section">
+      <div class="table-wrap">
+        <table class="rank-table pareto">
+          <thead><tr><th class="num">#</th><th>Product</th><th class="num">Revenue</th><th class="share-col">Running share</th></tr></thead>
+          <tbody>
+          {% for row in result.rows %}
+            <tr{% if row.place == result.head %} class="pareto-line"{% endif %}>
+              <td class="num muted">{{ row.place }}</td>
+              <td class="main-cell"><a href="{{ sc.url('explore.product', product_id=row.id) }}">{{ row.name }}</a> <span class="muted small">{{ row.sku }}</span>
+                {% if row.place <= result.head %}<span class="pill pill-accent">Top 80%</span>{% endif %}</td>
+              <td class="num">{{ row.revenue|money }}</td>
+              <td class="share-col"><span class="share"><svg class="share-bar" aria-hidden="true"><rect class="share-track" width="100%" height="100%" rx="3"></rect><rect class="share-fill{% if row.place > result.head %} share-fill-rest{% endif %}" width="{{ (row.running_share * 100)|round(1) }}%" height="100%" rx="3"></rect></svg><span class="num">{{ row.running_share|percent }}</span></span></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="card-note">The running share adds each product's revenue to all the ones above it (a SQL window function).</p>
+    </section>
+  {% else %}
+    {% call empty('No sales in these dates', 'Try a longer date range.', 'chart') %}{% endcall %}
+  {% endif %}
+{% endblock %}

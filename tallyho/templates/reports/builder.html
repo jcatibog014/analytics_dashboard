@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, page_head, empty %}
+{% from "_filters.html" import filter_bar %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ saved.name if saved else title }} - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  <a class="back-link no-print" href="{{ url_for('reports.index') }}">{{ icon('chevron-left', 16) }} Reports</a>
+  {% call page_head(saved.name if saved else title, (title if saved else none)) %}
+    <a class="button button-quiet" href="{{ url_for('reports.builder', format='csv', **args) }}">{{ icon('download', 16) }} CSV</a>
+    <a class="button button-quiet" href="{{ url_for('reports.builder', format='xlsx', **args) }}">{{ icon('download', 16) }} Excel</a>
+    <button class="button button-quiet" type="button" data-print hidden>{{ icon('print', 16) }} Print</button>
+  {% endcall %}
+  <p class="print-only print-head">{{ g.workspace.name }} &middot; {{ date_range(sc.filters.first, sc.filters.last) }}{% for name, picked in sc.chosen.items() %} &middot; {{ picked[1] }}{% endfor %}</p>
+
+  <div class="no-print">
+    {{ filter_bar(sc, keep) }}
+    <form method="get" class="card builder-form">
+      {% for name, value in sc.args().items() %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+      <label class="field">
+        <span class="field-label">Rows</span>
+        <select name="rows" data-auto-submit>
+          {% for key, name in dimensions %}<option value="{{ key }}"{% if key == spec.rows %} selected{% endif %}>{{ name }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="field">
+        <span class="field-label">Columns</span>
+        <select name="columns" data-auto-submit>
+          {% for key in column_dimensions %}<option value="{{ key }}"{% if key == spec.columns %} selected{% endif %}>{{ dict(dimensions)[key] if key else 'None' }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="field">
+        <span class="field-label">Show</span>
+        <select name="measure" data-auto-submit>
+          {% for key, name, _kind in measures %}<option value="{{ key }}"{% if key == spec.measure %} selected{% endif %}>{{ name }}</option>{% endfor %}
+        </select>
+      </label>
+      <div class="form-actions"><button class="button" type="submit" data-auto-submit-button>Show</button></div>
+    </form>
+  </div>
+
+  {% if table.body %}
+    <section class="section">
+      <div class="table-wrap pivot-wrap">
+        <table class="pivot">
+          <thead><tr>{% for header in table.header %}<th{% if not loop.first %} class="num"{% endif %}>{{ header }}</th>{% endfor %}</tr></thead>
+          <tbody>
+          {% for row in table.body %}
+            <tr>
+              <th scope="row">{{ row.name }}</th>
+              {% for value in row['values'] %}<td class="num pivot-cell level-{{ heat(value or 0, biggest) }}">{{ value|kpi(table.kind) if value is not none else '—' }}</td>{% endfor %}
+              <td class="num pivot-total">{{ row.total|kpi(table.kind) if row.total is not none else '—' }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+          <tfoot><tr><th scope="row">Total</th>{% for value in table.footer['values'] %}<td class="num">{{ value|kpi(table.kind) if value is not none else '—' }}</td>{% endfor %}<td class="num">{{ table.footer.total|kpi(table.kind) if table.footer.total is not none else '—' }}</td></tr></tfoot>
+        </table>
+      </div>
+      {% if result.truncated %}<p class="card-note">Showing the top {{ table.body|length }} rows ({{ result.truncated|number }} more are left out, here and in the downloads). Pick a filter or shorter dates to narrow it down.</p>{% endif %}
+      <p class="card-note no-print">Totals are worked out by the database, not added up: a customer who bought in two regions counts once in the total.</p>
+    </section>
+
+    <form method="post" action="{{ url_for('reports.save') }}" class="card section save-form no-print">
+      {{ csrf() }}
+      <input type="hidden" name="params" value='{{ args|tojson }}'>
+      <label class="field grow">
+        <span class="field-label">Save this report</span>
+        <input type="text" name="name" maxlength="80" required placeholder="Monthly sales by category" value="{{ saved.name if saved else '' }}">
+      </label>
+      <button class="button" type="submit">Save report</button>
+    </form>
+  {% else %}
+    {% call empty('Nothing to show', 'There are no sales in these dates with these filters.', 'table') %}{% endcall %}
+  {% endif %}
+{% endblock %}

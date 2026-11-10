@@ -123,3 +123,11 @@ function setUpRangeBar() {
   });
 }
 document.addEventListener("DOMContentLoaded", setUpRangeBar);
+
+// Reports: the Print button (without JavaScript, the browser's own Print works the same).
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("[data-print]").forEach((button) => {
+    button.hidden = false;
+    button.addEventListener("click", () => window.print());
+  });
+});

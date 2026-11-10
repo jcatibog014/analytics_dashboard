@@ -57,6 +57,10 @@ class User(Base):
     failed_logins: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(DateTime)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # The Monday email with last week's numbers (tick.py). last_summary_week is the
+    # Monday of the week it was last sent for, so it goes out once per week.
+    weekly_email: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_summary_week: Mapped[date | None] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     workspace: Mapped[Workspace] = relationship(back_populates="users")
@@ -295,3 +299,20 @@ class DailyProductStat(Base):
     discount: Mapped[int] = mapped_column(BigInteger)
     revenue: Mapped[int] = mapped_column(BigInteger)
     cost: Mapped[int] = mapped_column(BigInteger)
+
+
+# ---------- Reports ----------
+
+class SavedReport(Base):
+    """A report from the builder, kept with a name: its rows, columns, measure, dates and filters."""
+    __tablename__ = "saved_reports"
+    __table_args__ = {"sqlite_autoincrement": True}
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    workspace_id: Mapped[int] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    name: Mapped[str] = mapped_column(String(80))
+    params: Mapped[str] = mapped_column(Text)  # JSON: the address parts that make the report
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    user: Mapped[User | None] = relationship()

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_head, empty %}
+{% from "_icons.html" import icon %}
+{% block title %}Customer Cohorts - {{ APP_NAME }}{% endblock %}
+{% block head %}<script src="{{ url_for('static', filename='charts.js') }}" defer></script>{% endblock %}
+{% block content %}
+  <a class="back-link no-print" href="{{ url_for('reports.index') }}">{{ icon('chevron-left', 16) }} Reports</a>
+  {{ page_head('Customer Cohorts', 'Each row is the customers whose first order was in that month. Each column says how many of them ordered again 1, 2, 3 months later.') }}
+
+  <form method="get" class="range-bar no-print">
+    <label class="range-field">
+      <span class="visually-hidden">First orders in</span>
+      {{ icon('calendar', 16) }}
+      <select name="range" data-auto-submit>
+        {% for key, name in (('90d', 'First orders in the last 90 days'), ('ytd', 'First orders this year'), ('12m', 'First orders in the last 12 months'), ('all', 'All first orders')) %}
+          <option value="{{ key }}"{% if key == choice.key %} selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button class="button button-quiet" type="submit" data-auto-submit-button>Apply</button>
+  </form>
+
+  {% if rows %}
+    <section class="card section chart">
+      <div class="heat-scroll">
+        <table class="cohorts">
+          <thead>
+            <tr><th>First order</th><th class="num">Customers</th>{% for age in range(1, 13) %}<th class="num">{{ age }} mo</th>{% endfor %}</tr>
+          </thead>
+          <tbody>
+          {% for row in rows %}
+            <tr>
+              <th scope="row">{{ row.start|month_name }}</th>
+              <td class="num">{{ row.size|number }}</td>
+              {% for age in range(1, 13) %}
+                {% set cell = row.ages[age] %}
+                {% if cell is none %}<td class="cohort-empty"></td>
+                {% else %}<td class="num heat heat-{{ cell.level }}{% if cell.level >= 4 %} heat-dark{% endif %}" tabindex="0"
+                    data-tip-label="{{ row.start|month_name }} customers, {{ age }} month{{ 's' if age > 1 }} later" data-tip-value="{{ cell.share|percent }}" data-tip-note="{{ plural(cell.count, 'customer') }} ordered">{{ cell.share|percent(0) }}</td>{% endif %}
+              {% endfor %}
+            </tr>
+          {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr><th scope="row">Average</th><td></td>{% for share in average %}<td class="num">{{ share|percent(0) if share is not none else '' }}</td>{% endfor %}</tr>
+          </tfoot>
+        </table>
+      </div>
+      <p class="card-note">A blank cell is a month that hasn't happened yet. Darker means more customers came back.</p>
+    </section>
+  {% else %}
+    {% call empty('No first orders in these dates', 'Cohorts need customer IDs in your files. Try a longer range.', 'customers') %}{% endcall %}
+  {% endif %}
+{% endblock %}

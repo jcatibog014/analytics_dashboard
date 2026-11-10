@@ -1,0 +1,17 @@
+{% from "_macros.html" import csrf %}
+<section class="setting">
+  <div class="setting-text">
+    <h2>Weekly Email</h2>
+    <p>Every Monday, last week's numbers next to the week before, sent to {{ g.user.email }}.
+      {% if not mail_on %}Email isn't set up on this site yet, so nothing is sent for now.{% endif %}</p>
+  </div>
+  <form method="post">
+    {{ csrf() }}
+    <input type="hidden" name="action" value="weekly">
+    <fieldset class="stack plain-fieldset" {{ 'disabled' if g.user.is_demo else '' }}>
+      <label class="check-line"><input type="checkbox" name="weekly_email" value="1"{% if g.user.weekly_email %} checked{% endif %}>
+        Email me a summary every Monday</label>
+      <div class="form-actions"><button class="button" type="submit">Save</button></div>
+    </fieldset>
+  </form>
+</section>

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, page_head %}
+{% from "_icons.html" import icon %}
+{% block title %}Reports - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  {{ page_head('Reports', 'Build a table of any numbers, save it, print it or download it.') }}
+
+  <div class="grid-3">
+    <a class="card report-card" href="{{ url_for('reports.builder', **range_args()) }}">
+      {{ icon('table', 24) }}
+      <h2>Build a Report</h2>
+      <p>Pick rows, columns and a number: revenue by category and month, orders by region and weekday...</p>
+    </a>
+    <a class="card report-card" href="{{ url_for('reports.cohorts') }}">
+      {{ icon('customers', 24) }}
+      <h2>Customer Cohorts</h2>
+      <p>Customers grouped by the month they first ordered, and how many came back each month after.</p>
+    </a>
+    <a class="card report-card" href="{{ url_for('reports.pareto', **range_args()) }}">
+      {{ icon('chart', 24) }}
+      <h2>80/20 Products</h2>
+      <p>The few products that bring in most of your revenue, with the running share.</p>
+    </a>
+  </div>
+
+  <section class="section">
+    <div class="section-head"><h2>Saved Reports</h2></div>
+    {% if saved %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>What it shows</th><th>Saved</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+          <tbody>
+          {% for report in saved %}
+            <tr>
+              <td class="main-cell"><a href="{{ url_for('reports.show', report_id=report.id) }}">{{ report.name }}</a></td>
+              <td>{{ describe(report) }}</td>
+              <td class="nowrap">{{ report.created_at|ago }}{% if report.user %} by {{ report.user.first_name }}{% endif %}</td>
+              <td class="num">
+                <form method="post" action="{{ url_for('reports.delete', report_id=report.id) }}" data-confirm="Delete the report &ldquo;{{ report.name }}&rdquo;?">
+                  {{ csrf() }}
+                  <button class="icon-button" type="submit" title="Delete">{{ icon('trash', 16) }}<span class="visually-hidden">Delete {{ report.name }}</span></button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="card"><p class="muted">No saved reports yet. Build one and press Save report.</p></div>
+    {% endif %}
+  </section>
+{% endblock %}
