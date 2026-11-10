@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_head %}
+{% from "_icons.html" import icon %}
+{% block title %}Order {{ order.order_no }} - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  <a class="back-link" href="{{ url_for('data.records') }}">{{ icon('chevron-left', 16) }} Records</a>
+  {{ page_head('Order ' ~ order.order_no, (order.order_date|nice_date) ~ ((' at ' ~ '%02d'|format(order.order_hour) ~ ':00') if order.order_hour is not none else '')) }}
+
+  <div class="stat-row">
+    <div class="stat"><span>Revenue</span><strong>{{ order.revenue|money_cents }}</strong></div>
+    <div class="stat"><span>Profit</span><strong>{{ (order.revenue - order.cost)|money_cents }}</strong></div>
+    <div class="stat"><span>Customer</span><strong class="stat-text">{% if order.customer %}{{ order.customer.name }}{% else %}&mdash;{% endif %}</strong>
+      {% if order.customer %}<small>{{ order.customer.code }}</small>{% endif %}</div>
+    <div class="stat"><span>Region</span><strong class="stat-text">{{ order.region.name }}</strong></div>
+    <div class="stat"><span>Channel</span><strong class="stat-text">{{ order.channel.name }}</strong></div>
+  </div>
+
+  <section class="section">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th class="num">Line</th><th>Product</th><th>Category</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Cost</th><th class="num">Discount</th><th class="num">Revenue</th></tr></thead>
+        <tbody>
+        {% for line in order.lines %}
+          <tr>
+            <td class="num">{{ line.line_no }}</td>
+            <td class="main-cell">{{ line.product.name }} <span class="muted small">{{ line.product.sku }}</span></td>
+            <td>{{ line.product.category.name if line.product.category else '' }}</td>
+            <td class="num">{{ line.quantity|number }}</td>
+            <td class="num">{{ line.unit_price|money_cents }}</td>
+            <td class="num">{{ line.unit_cost|money_cents }}</td>
+            <td class="num">{% if line.discount %}{{ line.discount|money_cents }}{% else %}<span class="muted">&mdash;</span>{% endif %}</td>
+            <td class="num">{{ line.revenue|money_cents }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot><tr><td colspan="3">Total</td><td class="num">{{ order.units|number }}</td><td></td><td class="num">{{ order.cost|money_cents }}</td><td class="num">{{ order.discount|money_cents }}</td><td class="num">{{ order.revenue|money_cents }}</td></tr></tfoot>
+      </table>
+    </div>
+    {% if record %}<p class="card-note">From the import <a href="{{ url_for('data.show_import', import_id=record.id) }}">{{ record.filename }}</a>.</p>{% endif %}
+  </section>
+{% endblock %}

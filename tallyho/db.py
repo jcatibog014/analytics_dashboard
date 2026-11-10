@@ -13,6 +13,8 @@ Use it like this in a view:
 
 The session is closed at the end of every request (close_session).
 """
+import sqlite3
+from datetime import date, datetime
 from pathlib import Path
 
 import click
@@ -58,6 +60,10 @@ def make_engine(url):
     # pool_pre_ping: Neon closes idle connections, so check one before using it.
     engine = create_engine(url, pool_pre_ping=True)
     if engine.dialect.name == "sqlite":
+        # Hand-written SQL passes Python dates straight to SQLite. Say how to store them
+        # (as "2026-03-25", like SQLAlchemy's Date columns), instead of Python's old default.
+        sqlite3.register_adapter(date, date.isoformat)
+        sqlite3.register_adapter(datetime, lambda moment: moment.isoformat(" "))
         @event.listens_for(engine, "connect")
         def turn_on_foreign_keys(dbapi_connection, _record):
             # SQLite ignores FOREIGN KEY rules unless asked, per connection.

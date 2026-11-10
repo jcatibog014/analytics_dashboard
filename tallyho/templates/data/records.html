@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_head, empty %}
+{% from "_icons.html" import icon %}
+{% block title %}Records - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  {{ page_head('Records', plural(totals.orders, 'order') ~ ' with ' ~ plural(totals.lines, 'line') ~ ', newest first.') }}
+
+  <form method="get" class="filter-bar">
+    <label class="field grow">
+      <span class="field-label">Search</span>
+      <input type="search" name="q" value="{{ q }}" placeholder="Order number, product code or name, customer">
+    </label>
+    <label class="field">
+      <span class="field-label">From</span>
+      <input type="date" name="from" value="{{ first|iso if first else '' }}">
+    </label>
+    <label class="field">
+      <span class="field-label">To</span>
+      <input type="date" name="to" value="{{ last|iso if last else '' }}">
+    </label>
+    <div class="filter-actions">
+      {% if q or first or last %}<a class="button button-quiet" href="{{ url_for('data.records') }}">Clear</a>{% endif %}
+      <button class="button" type="submit">{{ icon('search', 16) }} Search</button>
+    </div>
+  </form>
+
+  {% if rows %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Order</th><th>Product</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Discount</th><th class="num">Revenue</th><th>Customer</th><th>Region</th><th>Channel</th></tr></thead>
+        <tbody>
+        {% for row in rows %}
+          <tr>
+            <td class="nowrap">{{ as_date(row.order_date)|short_date }}{% if row.order_hour is not none %} <span class="muted small">{{ '%02d'|format(row.order_hour) }}:00</span>{% endif %}</td>
+            <td class="nowrap"><a href="{{ url_for('data.order', order_no=row.order_no) }}">{{ row.order_no }}</a>{% if row.line_no > 1 %} <span class="muted small">#{{ row.line_no }}</span>{% endif %}</td>
+            <td>{{ row.product }} <span class="muted small">{{ row.sku }}</span></td>
+            <td class="num">{{ row.quantity|number }}</td>
+            <td class="num">{{ row.unit_price|money_cents }}</td>
+            <td class="num">{% if row.discount %}{{ row.discount|money_cents }}{% else %}<span class="muted">&mdash;</span>{% endif %}</td>
+            <td class="num">{{ row.revenue|money_cents }}</td>
+            <td>{{ row.customer or '' }}</td>
+            <td class="nowrap">{{ row.region }}</td>
+            <td class="nowrap">{{ row.channel }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <nav class="pager" aria-label="Pages">
+      <a class="button button-quiet button-small" href="{{ url_for('data.records', q=q or none, **{'from': first|iso if first else none, 'to': last|iso if last else none}) }}"{% if not after %} aria-disabled="true"{% endif %}>{{ icon('chevron-left', 16) }} Newest</a>
+      <span class="muted small">{{ rows|length }} lines on this page</span>
+      <a class="button button-quiet button-small" href="{{ url_for('data.records', q=q or none, after=next_after, **{'from': first|iso if first else none, 'to': last|iso if last else none}) }}"{% if not next_after %} aria-disabled="true"{% endif %}>Older {{ icon('chevron-right', 16) }}</a>
+    </nav>
+  {% elif q or first or last %}
+    {% call empty('Nothing found', 'No lines match that search.', 'search') %}{% endcall %}
+  {% else %}
+    {% call empty('No records yet', 'Import a file and every line of every order shows up here.', 'records') %}
+      <a class="button" href="{{ url_for('data.imports') }}">Import sales</a>
+    {% endcall %}
+  {% endif %}
+{% endblock %}

@@ -74,8 +74,26 @@ function setUpAutoSubmit() {
   });
 }
 
+// Import: drop a file on the box instead of clicking "Choose a file".
+function setUpDropZone() {
+  document.querySelectorAll(".drop-zone").forEach((zone) => {
+    const input = zone.querySelector('input[type="file"]');
+    ["dragenter", "dragover"].forEach((name) =>
+      zone.addEventListener(name, (event) => {
+        event.preventDefault();
+        zone.classList.add("is-over");
+      }));
+    ["dragleave", "drop"].forEach((name) => zone.addEventListener(name, () => zone.classList.remove("is-over")));
+    zone.addEventListener("drop", (event) => {
+      event.preventDefault();
+      if (event.dataTransfer.files.length) input.files = event.dataTransfer.files;
+    });
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   setUpTheme();
+  setUpDropZone();
   setUpMenu();
   setUpPopovers();
   setUpConfirm();
