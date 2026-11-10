@@ -1,9 +1,18 @@
 {% extends "base.html" %}
 {% from "_macros.html" import page_head, empty %}
+{% from "_filters.html" import filter_bar %}
 {% block title %}Dashboard - {{ APP_NAME }}{% endblock %}
 {% block content %}
-  {{ page_head('Dashboard', 'Hello, ' ~ g.user.first_name ~ '.') }}
-  {% call empty('No sales yet', 'Import a CSV or Excel file of your orders, and your numbers show up here.', 'import') %}
-    <a class="button" href="{{ url_for('data.imports') }}">Import sales</a>
-  {% endcall %}
+  {% if not has_sales %}
+    {{ page_head('Dashboard', 'Hello, ' ~ g.user.first_name ~ '.') }}
+    {% call empty('No sales yet', 'Import a CSV or Excel file of your orders, and your numbers show up here.', 'import') %}
+      <a class="button" href="{{ url_for('data.imports') }}">Import sales</a>
+    {% endcall %}
+  {% else %}
+    {{ page_head('Dashboard') }}
+    {{ filter_bar(sc) }}
+    {% call empty('No sales in these dates', 'Your latest sale is on ' ~ (latest|nice_date) ~ '.', 'calendar') %}
+      <a class="button" href="{{ url_for('main.home', **latest_args) }}">Show the 30 days before it</a>
+    {% endcall %}
+  {% endif %}
 {% endblock %}

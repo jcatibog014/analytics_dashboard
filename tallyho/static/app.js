@@ -99,3 +99,27 @@ document.addEventListener("DOMContentLoaded", () => {
   setUpConfirm();
   setUpAutoSubmit();
 });
+
+// The range bar: picking "Custom dates" shows the two date boxes instead of
+// reloading; changing a date picks "Custom dates" and applies it.
+function setUpRangeBar() {
+  document.querySelectorAll("[data-range-bar]").forEach((form) => {
+    const select = form.querySelector("[data-range-select]");
+    const dates = form.querySelector("[data-custom-dates]");
+    const [from, to] = dates.querySelectorAll("input");
+    select.addEventListener("change", () => {
+      if (select.value === "custom") {
+        dates.classList.remove("is-folded");
+        from.focus();
+      } else {
+        form.requestSubmit();
+      }
+    });
+    [from, to].forEach((input) =>
+      input.addEventListener("change", () => {
+        select.value = "custom";
+        if (from.value && to.value) form.requestSubmit();
+      }));
+  });
+}
+document.addEventListener("DOMContentLoaded", setUpRangeBar);

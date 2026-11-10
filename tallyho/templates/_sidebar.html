@@ -24,7 +24,7 @@
         {{ link('explore.products', 'Products', 'products', also=('explore.product',), keep_range=True) }}
         {{ link('explore.customers', 'Customers', 'customers', also=('explore.customer',), keep_range=True) }}
       </ul>
-      <p class="side-label">Plan &amp; Share</p>
+      {% if has_page('reports.index') or has_page('goals.index') %}<p class="side-label">Plan &amp; Share</p>{% endif %}
       <ul class="side-links">
         {{ link('reports.index', 'Reports', 'reports', also=('reports.builder', 'reports.show', 'reports.cohorts', 'reports.pareto'), keep_range=True) }}
         {{ link('goals.index', 'Goals', 'goals', also=('goals.edit',)) }}

@@ -210,7 +210,7 @@ def test_kpi_cards_say_which_way_is_good():
     assert cards["revenue"]["change"] == pytest.approx(0.2) and cards["revenue"]["good"] is True
     assert cards["orders"]["good"] is None  # no change
     assert cards["discount_rate"]["change"] == pytest.approx(0.05) and cards["discount_rate"]["good"] is False
-    assert cards["margin"]["good"] is False
+    assert "margin" not in cards  # it sits under Gross Profit, not in a tile of its own
 
 
 def test_sql_buckets_match_python(app):

@@ -131,8 +131,28 @@ def iso(day):
     return day.isoformat() if isinstance(day, (date, datetime)) else day
 
 
+def kpi(value, kind):
+    """A KPI in full: money, number or percent."""
+    if kind == "money":
+        return money(value)
+    if kind == "percent":
+        return percent(value)
+    return number(round(value)) if isinstance(value, float) else number(value)
+
+
+def kpi_short(value, kind):
+    """A KPI tile's big number: in full up to P1M / 100,000, then 1.2M."""
+    if value is None:
+        return "—"
+    if kind == "money" and abs(value) >= 100_000_000:
+        return money_short(value)
+    if kind == "number" and abs(value) >= 100_000:
+        return short_number(value)
+    return kpi(value, kind)
+
+
 def init_app(app):
     for function in (money, money_cents, money_short, short_number, number, percent, nice_date, short_date,
-                     month_name, clock, nice_datetime, ago, iso):
+                     month_name, clock, nice_datetime, ago, iso, kpi, kpi_short):
         app.jinja_env.filters[function.__name__] = function
     app.jinja_env.globals.update(plural=plural, date_range=date_range, PESO=PESO)

@@ -146,7 +146,6 @@ KPIS = [
     ("orders", "Orders", "number", True, "How many orders (receipts)."),
     ("aov", "Average Order", "money", True, "Revenue divided by orders."),
     ("profit", "Gross Profit", "money", True, "Revenue minus what the items cost you."),
-    ("margin", "Profit Margin", "percent", True, "Gross profit as a share of revenue."),
     ("units", "Units Sold", "number", True, "How many items, adding up every quantity."),
     ("customers", "Customers", "number", True, "Different customers who ordered."),
     ("new_customers", "New Customers", "number", True, "Customers whose very first order is in these dates."),
@@ -155,6 +154,8 @@ KPIS = [
     ("discount_rate", "Discount Rate", "percent", False, "Discounts as a share of the price before discounts."),
 ]
 KPI_BY_KEY = {k[0]: k for k in KPIS}
+# Shown inside another tile, not as its own (the margin sits under Gross Profit).
+EXTRA_KPIS = [("margin", "Profit Margin", "percent", True, "Gross profit as a share of revenue.")]
 
 
 def derive(sums):
