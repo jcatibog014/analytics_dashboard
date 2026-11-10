@@ -720,7 +720,9 @@ def earliest_first_order(s, workspace_id, customer_ids):
 
 def after_change(s, workspace, first, last):
     """Sales between first and last changed: everything built from them must follow."""
+    from . import rollups
     from .workspaces import bump_data_version
+    rollups.rebuild(s, workspace.id, first, last)
     bump_data_version(workspace)
 
 

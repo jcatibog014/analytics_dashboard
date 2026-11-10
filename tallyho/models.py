@@ -249,3 +249,49 @@ class SavedMatch(Base):
     mapping: Mapped[str] = mapped_column(Text)            # JSON: {"order_no": "Receipt #", ...}
     date_format: Mapped[str] = mapped_column(String(8), default="auto")
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+# ---------- Rollups: daily totals, kept next to the raw sales ----------
+#
+# A dashboard for "the last 12 months" would add up every order line in those
+# months, every time the page loads. A rollup adds them up once, per day, when
+# the sales arrive (rollups.py). The dashboard then adds 365 small rows per
+# region and channel instead of hundreds of thousands of lines.
+#
+# Only "additive" numbers can be rolled up: sums and counts that can be added
+# again (orders on Monday + orders on Tuesday = orders on both days). "How many
+# different customers" can't: a customer who came on both days would count twice.
+# So customer counts always come from the orders table.
+
+class DailyOrderStat(Base):
+    """One row per day, region and channel."""
+    __tablename__ = "daily_order_stats"
+
+    workspace_id: Mapped[int] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"), primary_key=True)
+    day: Mapped[date] = mapped_column(Date, primary_key=True)
+    region_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    channel_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    orders: Mapped[int] = mapped_column(Integer)
+    units: Mapped[int] = mapped_column(Integer)
+    gross: Mapped[int] = mapped_column(BigInteger)
+    discount: Mapped[int] = mapped_column(BigInteger)
+    revenue: Mapped[int] = mapped_column(BigInteger)
+    cost: Mapped[int] = mapped_column(BigInteger)
+    new_customers: Mapped[int] = mapped_column(Integer)  # orders that were a customer's very first
+
+
+class DailyProductStat(Base):
+    """One row per day, product, region and channel."""
+    __tablename__ = "daily_product_stats"
+    __table_args__ = (Index("ix_daily_product_stats_product", "workspace_id", "product_id", "day"),)
+
+    workspace_id: Mapped[int] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"), primary_key=True)
+    day: Mapped[date] = mapped_column(Date, primary_key=True)
+    product_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    region_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    channel_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    orders: Mapped[int] = mapped_column(Integer)  # orders with this product: adds up over days, not over products
+    units: Mapped[int] = mapped_column(Integer)
+    discount: Mapped[int] = mapped_column(BigInteger)
+    revenue: Mapped[int] = mapped_column(BigInteger)
+    cost: Mapped[int] = mapped_column(BigInteger)
