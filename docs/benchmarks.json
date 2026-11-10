@@ -1,0 +1,62 @@
+{
+  "made_on": "2026-11-10",
+  "database": "sqlite",
+  "days": 730,
+  "lines": 911701,
+  "orders": 495450,
+  "import_seconds": 42.334,
+  "lines_per_second": 21535.904946378796,
+  "range_days": 365,
+  "sources": [
+    {
+      "name": "KPI totals",
+      "raw_ms": 652.4646000470966,
+      "rollup_ms": 81.00270014256239,
+      "speedup": 8.054850009922854,
+      "raw_rows": 268788,
+      "rollup_rows": 7294,
+      "same": true
+    },
+    {
+      "name": "Revenue by day (with a 7-day average)",
+      "raw_ms": 609.4690999016166,
+      "rollup_ms": 5.4623999167233706,
+      "speedup": 111.57533486988035,
+      "raw_rows": 268788,
+      "rollup_rows": 7294,
+      "same": true
+    },
+    {
+      "name": "Sales by region",
+      "raw_ms": 639.6413999609649,
+      "rollup_ms": 3.308099927380681,
+      "speedup": 193.35613010560607,
+      "raw_rows": 268788,
+      "rollup_rows": 7294,
+      "same": true
+    },
+    {
+      "name": "Top 10 products",
+      "raw_ms": 990.9087000414729,
+      "rollup_ms": 64.72430005669594,
+      "speedup": 15.309685839375257,
+      "raw_rows": 494972,
+      "rollup_rows": 134577,
+      "same": true
+    }
+  ],
+  "index": {
+    "sql": "SELECT COUNT(*) AS orders, SUM(o.units) AS units, SUM(o.discount) AS discount, SUM(o.revenue) AS revenue, SUM(o.cost) AS cost, SUM(CASE WHEN c.first_order_id = o.id THEN 1 ELSE 0 END) AS new_customers FROM orders o LEFT JOIN customers c ON c.id = o.customer_id WHERE o.workspace_id = :ws AND o.order_date BETWEEN date(:first) AND date(:last)",
+    "with_ms": 57.885400019586086,
+    "without_ms": 129.32830001227558,
+    "dialect": "sqlite"
+  },
+  "index_days": 30,
+  "paging": {
+    "total": 911701,
+    "offset": 729310,
+    "offset_ms": 494.2853001412004,
+    "keyset_ms": 0.8880000095814466,
+    "same": true
+  }
+}

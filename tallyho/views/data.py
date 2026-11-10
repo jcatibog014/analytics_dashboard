@@ -235,7 +235,9 @@ def records():
     try:
         cursor_day, cursor_order, cursor_line = after.split("_")
         params.update(c_day=date.fromisoformat(cursor_day), c_order=int(cursor_order), c_line=int(cursor_line))
-        where.append("(o.order_date < :c_day OR (o.order_date = :c_day AND o.id < :c_order)"
+        # The first part says nothing new, but it is simple enough for the index to start
+        # right at the cursor; the OR part then finds the exact place.
+        where.append("o.order_date <= :c_day AND (o.order_date < :c_day OR (o.order_date = :c_day AND o.id < :c_order)"
                      " OR (o.order_date = :c_day AND o.id = :c_order AND l.line_no > :c_line))")
     except ValueError:
         after = ""

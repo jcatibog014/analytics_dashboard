@@ -174,14 +174,20 @@ def derive(sums):
     return out
 
 
+def kpi_query(d, f, kind):
+    """The SQL (and its parameters) for the KPI sums from one kind of source.
+    The Performance Lab times and EXPLAINs exactly this."""
+    src = make_source(d, f, kind)
+    sums = ", ".join(f"{expression} AS {name}" for name, expression in src.sums.items())
+    return f"SELECT {sums} FROM {src.tables} WHERE {' AND '.join(src.where)}", params_for(f)
+
+
 @memo
 def kpis(s, f, source="auto"):
     d = sql.name_of(s)
     kind = plan(f, "raw" if source == "raw" else ("rollup" if source == "rollup" else "auto"))
-    src = make_source(d, f, kind)
-    sums = ", ".join(f"{expression} AS {name}" for name, expression in src.sums.items())
-    row = s.execute(text(f"SELECT {sums} FROM {src.tables} WHERE {' AND '.join(src.where)}"),
-                    params_for(f)).mappings().one()
+    query, params = kpi_query(d, f, kind)
+    row = s.execute(text(query), params).mappings().one()
     out = _row_sums(row)
     # Different customers can't come from a rollup (see models.py): ask the orders.
     people = customer_counts(s, f)
@@ -192,15 +198,28 @@ def kpis(s, f, source="auto"):
 
 
 def customer_counts(s, f):
-    """How many different customers ordered, and how many of them for the first time ever."""
+    """How many different customers ordered, and how many of them for the first time ever.
+
+    Two lessons from the benchmark (docs/BENCHMARKS.md):
+    - COUNT(DISTINCT o.customer_id) needs no join: with the customer in the date index, it
+      is read from the index alone;
+    - with no filter, "new customers" are simply the customers whose first order is in
+      these dates: one count on the customers table instead of a join with every order.
+    """
     d = sql.name_of(s)
     src = make_source(d, f, "raw")
-    row = s.execute(text(f"""
-        SELECT COUNT(DISTINCT o.customer_id) AS customers,
-               COUNT(DISTINCT CASE WHEN c.first_order_date >= {sql.date_param(d, 'first')} THEN o.customer_id END)
-                 AS new_customers
-        FROM {src.tables} WHERE {' AND '.join(src.where)}"""), params_for(f)).mappings().one()
-    return {"customers": int(row["customers"] or 0), "new_customers": int(row["new_customers"] or 0)}
+    tables = src.tables if f.line_level else "orders o"
+    customers = s.execute(text(f"SELECT COUNT(DISTINCT o.customer_id) FROM {tables} WHERE {' AND '.join(src.where)}"),
+                          params_for(f)).scalar()
+    first, last = sql.date_param(d, "first"), sql.date_param(d, "last")
+    if f.region_id is None and f.channel_id is None and not f.line_level and f.customer_id is None:
+        new = s.execute(text(f"SELECT COUNT(*) FROM customers WHERE workspace_id = :ws "
+                             f"AND first_order_date BETWEEN {first} AND {last}"), params_for(f)).scalar()
+    else:
+        new = s.execute(text(f"SELECT COUNT(DISTINCT o.customer_id) FROM {src.tables} "
+                             f"WHERE {' AND '.join(src.where)} AND c.first_order_date >= {first}"),
+                        params_for(f)).scalar()
+    return {"customers": int(customers or 0), "new_customers": int(new or 0)}
 
 
 def change(now, before):

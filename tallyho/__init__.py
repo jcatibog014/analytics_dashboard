@@ -72,7 +72,7 @@ def create_app(test_config=None):
         raise RuntimeError("Set the DATABASE_URL environment variable on Render (Neon's connection string).")
 
     from . import auth, db, formatting, goals, ranges, rollups, tick
-    from .views import data, explore, main, reports
+    from .views import data, explore, lab, main, reports
     from .views import goals as goal_views
 
     db.init_app(app)
@@ -83,8 +83,9 @@ def create_app(test_config=None):
     data.init_app(app)
     tick.init_app(app)
     goals.init_app(app)
+    lab.init_app(app)
     # auth comes first: its before_request (load_user) must run before the others'.
-    for blueprint in (auth.bp, main.bp, explore.bp, reports.bp, goal_views.bp, data.bp, tick.bp):
+    for blueprint in (auth.bp, main.bp, explore.bp, reports.bp, goal_views.bp, data.bp, lab.bp, tick.bp):
         app.register_blueprint(blueprint)
 
     app.jinja_env.globals.update(

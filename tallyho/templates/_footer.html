@@ -1,0 +1,9 @@
+{# Every page says how hard the database worked for it (db.time_queries). #}
+{% set count, database_ms, page_ms = page_timings() %}
+<footer class="app-footer no-print">
+  <span>{{ APP_NAME }} &middot; {{ TAGLINE }}</span>
+  <span class="tabular" title="SQL statements this page ran, and the time they took in the database">
+    {{ plural(count, 'query', 'queries') }} &middot; {{ '%.1f'|format(database_ms) }} ms in the database &middot; page {{ '%.0f'|format(page_ms) }} ms
+    {% if has_page('lab.index') %}&middot; <a href="{{ url_for('lab.index') }}">Performance Lab</a>{% endif %}
+  </span>
+</footer>

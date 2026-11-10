@@ -130,7 +130,11 @@ class Channel(Base):
 
 class Customer(Base):
     __tablename__ = "customers"
-    __table_args__ = (UniqueConstraint("workspace_id", "code"),)
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "code"),
+        # "New customers in these dates" without looking at a single order.
+        Index("ix_customers_workspace_first_day", "workspace_id", "first_order_date"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     workspace_id: Mapped[int] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
@@ -190,8 +194,11 @@ class Order(Base):
     __table_args__ = (
         UniqueConstraint("workspace_id", "order_no"),
         # The indexes follow the questions we ask. Almost every query says
-        # "this workspace, between these dates", so that pair comes first.
-        Index("ix_orders_workspace_day", "workspace_id", "order_date"),
+        # "this workspace, between these dates", so that pair comes first. The
+        # customer is in it too (migration 0006, after the benchmark): "how many
+        # different customers" is then answered from the index alone ("covering"),
+        # without visiting each order's row.
+        Index("ix_orders_workspace_day_customer", "workspace_id", "order_date", "customer_id"),
         # New and returning customers: "this customer's orders, by date".
         Index("ix_orders_workspace_customer_day", "workspace_id", "customer_id", "order_date"),
         {"sqlite_autoincrement": True},
@@ -204,8 +211,10 @@ class Order(Base):
     order_date: Mapped[date] = mapped_column(Date)
     order_hour: Mapped[int | None] = mapped_column(SmallInteger)  # 0-23, when the file had times
     customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id", ondelete="SET NULL"))
-    region_id: Mapped[int] = mapped_column(ForeignKey("regions.id", ondelete="RESTRICT"))
-    channel_id: Mapped[int] = mapped_column(ForeignKey("channels.id", ondelete="RESTRICT"))
+    # No ON DELETE here on purpose: the default (NO ACTION) is checked at the end of the
+    # statement, so deleting a whole workspace (a demo) can take its orders and regions together.
+    region_id: Mapped[int] = mapped_column(ForeignKey("regions.id"))
+    channel_id: Mapped[int] = mapped_column(ForeignKey("channels.id"))
     line_count: Mapped[int] = mapped_column(Integer, default=0)
     units: Mapped[int] = mapped_column(Integer, default=0)
     gross: Mapped[int] = mapped_column(BigInteger, default=0)     # quantity x price, before discounts
@@ -231,7 +240,7 @@ class OrderLine(Base):
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
     workspace_id: Mapped[int] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
     line_no: Mapped[int] = mapped_column(Integer)
-    product_id: Mapped[int] = mapped_column(ForeignKey("products.id", ondelete="RESTRICT"))
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
     quantity: Mapped[int] = mapped_column(Integer)
     unit_price: Mapped[int] = mapped_column(BigInteger)
     unit_cost: Mapped[int] = mapped_column(BigInteger, default=0)

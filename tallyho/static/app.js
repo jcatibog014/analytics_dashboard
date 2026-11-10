@@ -131,3 +131,4 @@ document.addEventListener("DOMContentLoaded", () => {
     button.addEventListener("click", () => window.print());
   });
 });
+

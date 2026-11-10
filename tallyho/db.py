@@ -14,13 +14,14 @@ Use it like this in a view:
 The session is closed at the end of every request (close_session).
 """
 import sqlite3
+import time
 from datetime import date, datetime
 from pathlib import Path
 
 import click
 from alembic import command
 from alembic.config import Config
-from flask import current_app, g
+from flask import current_app, g, has_request_context
 from flask.cli import with_appcontext
 from sqlalchemy import MetaData, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Session
@@ -69,6 +70,34 @@ def make_engine(url):
             # SQLite ignores FOREIGN KEY rules unless asked, per connection.
             dbapi_connection.execute("PRAGMA foreign_keys = ON")
     return engine
+
+
+def time_queries(engine):
+    """Time every SQL statement a page runs. The footer of each page shows the count and
+    the total, and the Performance Lab lists them. (SQLAlchemy calls these two functions
+    just before and after each statement goes to the database.)"""
+    @event.listens_for(engine, "before_cursor_execute")
+    def started(connection, _cursor, _statement, _parameters, _context, _executemany):
+        connection.info.setdefault("query_started", []).append(time.perf_counter())
+
+    @event.listens_for(engine, "after_cursor_execute")
+    def finished(connection, _cursor, statement, _parameters, _context, executemany):
+        began = connection.info["query_started"].pop()
+        if has_request_context() and "query_log" in g:
+            g.query_log.append((statement, (time.perf_counter() - began) * 1000, executemany))
+
+
+def start_page_timer():
+    g.query_log = []
+    g.page_started = time.perf_counter()
+
+
+def page_timings():
+    """(statements, ms in the database, ms for the whole page so far) for the footer."""
+    log = g.get("query_log") or []
+    started_at = g.get("page_started")
+    total = (time.perf_counter() - started_at) * 1000 if started_at else 0
+    return len(log), sum(ms for _s, ms, _m in log), total
 
 
 def engine():
@@ -151,5 +180,8 @@ def upgrade_db_command():
 def init_app(app):
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
     app.extensions["tallyho_engine"] = make_engine(database_url(app.config))
+    time_queries(app.extensions["tallyho_engine"])
+    app.before_request(start_page_timer)
+    app.jinja_env.globals["page_timings"] = page_timings
     app.teardown_appcontext(close_session)
     app.cli.add_command(upgrade_db_command)
