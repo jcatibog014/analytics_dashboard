@@ -192,3 +192,14 @@ if ("serviceWorker" in navigator) {
     });
   });
 }
+
+// The filters on a phone: folded behind the Filters button (it opens and closes the panel);
+// on a computer always open, as part of the row.
+function setUpMoreFilters() {
+  const phone = window.matchMedia("(max-width: 39.99rem)");
+  const panels = document.querySelectorAll("[data-more-filters]");
+  const fit = () => panels.forEach((panel) => (panel.open = !phone.matches));
+  fit();
+  phone.addEventListener("change", fit);
+}
+document.addEventListener("DOMContentLoaded", setUpMoreFilters);

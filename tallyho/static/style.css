@@ -903,3 +903,36 @@ fieldset[disabled] .switch { cursor: not-allowed; opacity: 0.6; }
 .step.is-done .step-dot { border-color: var(--accent); color: var(--accent-text); }
 .step.is-done + .step::before { background: var(--accent); }
 .spacer-right { margin-right: auto; }
+
+/* ---------- The filters on a phone ---------- */
+
+/* On a computer the Filters panel is part of the row: no button, no box. */
+.more-filters, .more-filters-body, .more-filters::details-content { display: contents; }
+.more-filters > summary { display: none; }
+.filter-count {
+  display: inline-grid; place-items: center; min-width: 1.25rem; height: 1.25rem; padding: 0 0.3125rem;
+  border-radius: 999px; background: var(--accent); color: var(--on-accent); font-size: 0.75rem; font-weight: 700;
+}
+/* On a phone: the dates and a Filters button share one row; the rest folds into a panel under them. */
+@media (max-width: 39.99rem) {
+  .range-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.5rem; }
+  .range-bar .range-field { width: 100%; }
+  .range-bar .range-field select { width: 100%; min-width: 0; }
+  .custom-dates { grid-column: 1 / -1; }
+  .custom-dates label { flex: 1; }
+  .custom-dates input { width: 100%; }
+  .more-filters > summary { display: inline-flex; list-style: none; }
+  .more-filters > summary::-webkit-details-marker { display: none; }
+  .more-filters[open] > summary { border-color: var(--accent); color: var(--accent-text) !important; }
+  /* Newer browsers wrap a <details> body in a box of its own: that box takes the whole row too. */
+  .more-filters::details-content { display: block; grid-column: 1 / -1; }
+  /* Closed is closed (the computer's "display: contents" above would otherwise keep it showing). */
+  .more-filters:not([open])::details-content, .more-filters:not([open]) .more-filters-body { display: none; }
+  .more-filters-body {
+    display: grid; grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem;
+    padding: 0.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .more-filters-body .range-field:first-child { grid-column: 1 / -1; }
+  [data-apply-button] { grid-column: 1 / -1; }
+  .range-line { margin-top: 0.625rem; font-size: 0.8125rem; }
+}

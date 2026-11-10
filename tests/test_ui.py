@@ -49,3 +49,13 @@ def test_dashboard_wording(app, owner):
     page = owner.get("/").get_data(as_text=True)
     assert "Compare to previous period" in page and "View as table" in page
     assert 'class="spark-area"' in page  # the sparklines' soft fill
+
+
+def test_on_a_phone_the_filters_fold_behind_a_button(app, owner):
+    post(owner, "/import/sample")
+    page = owner.get("/?region=1&compare=year").get_data(as_text=True)
+    assert "data-more-filters" in page and "more-filters-button" in page
+    assert '<span class="filter-count">2</span>' in page  # a region and a comparison that isn't the usual
+    plain = owner.get("/").get_data(as_text=True)
+    assert "filter-count" not in plain
+    assert ".more-filters::details-content" in CSS and "max-width: 39.99rem" in CSS
