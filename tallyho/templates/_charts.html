@@ -1,0 +1,105 @@
+{# Charts drawn as SVG from charts.py's geometry. static/charts.js adds the hover layer:
+   every value it shows is also in the "Show as table" view below each chart. #}
+
+{# A line chart. series: [(key, name)] in drawing order, e.g. [('main','Revenue'), ('avg','7-day average')]. #}
+{% macro line(charts, series, summary, note=none) %}
+  {% for size in ('wide', 'narrow') %}
+  {% set chart = charts[size] %}
+  <figure class="chart line-chart only-{{ size }}" data-chart="line">
+    {% if series|length > 1 %}
+      <ul class="legend" aria-hidden="true">
+        {% for key, name in series %}<li><span class="key key-line key-{{ key }}"></span>{{ name }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    <div class="chart-scroll">
+      <svg class="chart-svg" viewBox="0 0 {{ chart.width }} {{ chart.height }}" role="img" aria-label="{{ summary }}" tabindex="0"
+           data-series="{% for key, name in series %}{{ key }}{% if not loop.last %};{% endif %}{% endfor %}">
+        {% for tick in chart.y_ticks %}
+          <line class="grid" x1="{{ chart.left }}" x2="{{ chart.right }}" y1="{{ tick.y|round(1) }}" y2="{{ tick.y|round(1) }}"></line>
+          <text class="axis-text" x="{{ chart.left - 8 }}" y="{{ (tick.y + 4)|round(1) }}" text-anchor="end">{{ tick.text }}</text>
+        {% endfor %}
+        <line class="baseline" x1="{{ chart.left }}" x2="{{ chart.right }}" y1="{{ chart.bottom }}" y2="{{ chart.bottom }}"></line>
+        {% for label in chart.x_labels %}
+          <text class="axis-text" x="{{ label.x|round(1) }}" y="{{ chart.bottom + 19 }}" text-anchor="{{ label.anchor }}">{{ label.text }}</text>
+        {% endfor %}
+        {% if chart.area %}<path class="area" d="{{ chart.area }}"></path>{% endif %}
+        {% if chart.compare %}<path class="series series-compare" d="{{ chart.compare }}"></path>{% endif %}
+        {% if chart.avg %}<path class="series series-avg" d="{{ chart.avg }}"></path>{% endif %}
+        {% if chart.second %}<path class="series series-second" d="{{ chart.second }}"></path>{% endif %}
+        {% if chart.main %}<path class="series series-main" d="{{ chart.main }}"></path>{% endif %}
+        {% if chart.end %}<circle class="end-dot" cx="{{ chart.end.x|round(1) }}" cy="{{ chart.end.y|round(1) }}" r="4"></circle>{% endif %}
+        <line class="crosshair" x1="0" x2="0" y1="{{ chart.top }}" y2="{{ chart.bottom }}" hidden></line>
+        <circle class="hover-dot" r="4" cx="0" cy="0" hidden></circle>
+        <g class="hit-layer">
+          {% for column in chart.columns %}
+            <rect class="hit" x="{{ column.x0|round(1) }}" y="{{ chart.top }}" width="{{ column.w|round(1) }}" height="{{ chart.bottom - chart.top }}"
+                  data-x="{{ column.x|round(1) }}"{% if column.y is not none %} data-y="{{ column.y|round(1) }}"{% endif %}
+                  data-label="{{ column.tip.label }}"
+                  data-rows="{% for row in column.tip.rows %}{{ row[0] }}|{{ row[1] }}|{{ row[2] }}{% if not loop.last %};{% endif %}{% endfor %}"></rect>
+          {% endfor %}
+        </g>
+      </svg>
+    </div>
+    <div class="tooltip" role="status" hidden></div>
+  </figure>
+  {% endfor %}
+  {% if note %}<p class="chart-note">{{ note }}</p>{% endif %}
+{% endmacro %}
+
+{# A sparkline for a KPI tile. #}
+{% macro spark(line) %}
+  {% if line %}
+    <svg class="spark" viewBox="0 0 {{ line.width }} {{ line.height }}" preserveAspectRatio="none" aria-hidden="true">
+      <path d="{{ line.d }}" vector-effect="non-scaling-stroke"></path>
+    </svg>
+  {% endif %}
+{% endmacro %}
+
+{# Horizontal bars as rows: name, bar, value. A row with an "href" links its name. #}
+{% macro bars(rows, label, note_key=none) %}
+  <ul class="bar-list" aria-label="{{ label }}">
+    {% for row in rows %}
+      <li class="bar-row{% if row.is_rest %} is-rest{% endif %}" tabindex="0"
+          data-tip-label="{{ row.label }}" data-tip-value="{{ row.text }}"{% if row.share is defined and row.share %} data-tip-note="{{ (row.share)|percent }} of the total"{% endif %}>
+        <span class="bar-name">{% if row.href %}<a href="{{ row.href }}">{{ row.label }}</a>{% else %}{{ row.label }}{% endif %}</span>
+        <svg class="bar-track" aria-hidden="true">
+          {% if row.width %}
+            <rect class="bar{% if row.is_rest %} bar-rest{% endif %}" x="0" y="0" width="{{ row.width }}%" height="100%" rx="4"></rect>
+            <rect class="bar{% if row.is_rest %} bar-rest{% endif %}" x="0" y="0" width="{{ row.half }}%" height="100%"></rect>
+          {% endif %}
+        </svg>
+        <span class="bar-value">{{ row.text }}{% if note_key and row[note_key] is not none %} <small>{{ row[note_key] }}</small>{% endif %}</span>
+      </li>
+    {% endfor %}
+  </ul>
+{% endmacro %}
+
+{# The same numbers as a table, folded away (works without JavaScript). #}
+{% macro table_view(headers, rows, label='Show as table') %}
+  <details class="table-view">
+    <summary>{{ label }}</summary>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>{% for header in headers %}<th{% if not loop.first %} class="num"{% endif %}>{{ header }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for row in rows %}<tr>{% for cell in row %}<td{% if not loop.first %} class="num"{% endif %}>{{ cell }}</td>{% endfor %}</tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+{% endmacro %}
+
+{# A change against the earlier period: an arrow and the number, green or red by whether it's good. #}
+{% macro delta(card, compare_label) %}
+  {% if card.change is none %}
+    <span class="delta delta-none">{% if card.before is none %}No earlier data{% else %}No change{% endif %}</span>
+  {% else %}
+    {% from "_icons.html" import icon %}
+    <span class="delta {% if card.good is true %}delta-good{% elif card.good is false %}delta-bad{% else %}delta-flat{% endif %}"
+          title="{{ compare_label }}: {{ card.before|kpi(card.kind) }}">
+      {% if card.change > 0 %}{{ icon('up', 14) }}{% elif card.change < 0 %}{{ icon('down', 14) }}{% endif %}
+      {%- if card.kind == 'percent' %}{{ '%+.1f'|format(card.change * 100) }} pts{% else %}{{ '%+.1f'|format(card.change * 100) }}%{% endif %}
+      <span class="visually-hidden">compared with {{ compare_label }}</span>
+    </span>
+  {% endif %}
+{% endmacro %}

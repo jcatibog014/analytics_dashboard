@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_head, avatar %}
+{% from "_filters.html" import filter_bar %}
+{% from "_kpis.html" import kpi_row %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ person.name }} - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  <nav class="breadcrumbs" aria-label="You are here"><a href="{{ sc.url('explore.customers') }}">Customers</a> {{ icon('chevron-right', 14) }} <span>{{ person.code }}</span></nav>
+  <div class="page-head">
+    <div class="person-head">
+      {{ avatar(person) }}
+      <div>
+        <h1>{{ person.name }}</h1>
+        <p class="lead">{% if person.first_order_date %}Customer since {{ person.first_order_date|nice_date }} &middot; {{ plural(ever[0], 'order') }} in all, {{ ever[1]|money }}{% if ever[2] %}, last on {{ ever[2]|nice_date }}{% endif %}{% else %}No orders yet{% endif %}</p>
+      </div>
+    </div>
+  </div>
+  {{ filter_bar(sc, show=()) }}
+
+  {{ kpi_row(cards, sc, now, label='This customer') }}
+
+  <div class="grid-2 section">
+    <section class="card">
+      <div class="card-head"><h2>Latest Orders</h2><p>All dates</p></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Order</th><th>Channel</th><th class="num">Items</th><th class="num">Revenue</th></tr></thead>
+          <tbody>
+          {% for order in recent %}
+            <tr>
+              <td class="nowrap">{{ order.order_date|short_date }}</td>
+              <td><a href="{{ url_for('data.order', order_no=order.order_no) }}">{{ order.order_no }}</a></td>
+              <td>{{ order.channel.name }}</td>
+              <td class="num">{{ order.units|number }}</td>
+              <td class="num">{{ order.revenue|money }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>What They Buy</h2><p>In these dates</p></div>
+      {% if favourites %}
+        <ul class="people-list">
+          {% for row in favourites %}
+            <li><a href="{{ sc.url('explore.product', product_id=row.id) }}">{{ row.name }}</a>
+              <span class="num">{{ row.units|number }} &times; <small class="muted">{{ row.revenue|money }}</small></span></li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="muted">Nothing in these dates. Try a longer range.</p>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

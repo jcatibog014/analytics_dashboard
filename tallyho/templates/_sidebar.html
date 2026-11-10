@@ -1,0 +1,48 @@
+{% from "_icons.html" import logo, icon %}
+{% from "_macros.html" import avatar %}
+{% set page = request.endpoint or '' %}
+{# A menu link. It only shows once its page exists (has_page), and keeps the chosen dates (range_args). #}
+{% macro link(endpoint, label, icon_name, also=(), count=None, keep_range=False) %}
+  {% if has_page(endpoint) %}
+    {% set is_here = page == endpoint or page in also %}
+    <li><a href="{{ url_for(endpoint, **(range_args() if keep_range else {})) }}"{% if is_here %} aria-current="page"{% endif %}>{{ icon(icon_name) }} <span>{{ label }}</span>
+      {% if count %}<span class="count">{{ count }}</span>{% endif %}</a></li>
+  {% endif %}
+{% endmacro %}
+<aside class="sidebar">
+  <div class="sidebar-top">
+    <a class="logo" href="{{ url_for('main.home') }}">{{ logo() }} <span>{{ APP_NAME }}</span></a>
+    <button class="menu-button" type="button" data-menu-button aria-expanded="false" aria-controls="side-nav" hidden>
+      <span aria-hidden="true">&#9776;</span> Menu
+    </button>
+  </div>
+  <div class="sidebar-menu" id="side-nav">
+    <nav aria-label="Main">
+      <p class="side-label">{{ g.workspace.name }}</p>
+      <ul class="side-links">
+        {{ link('main.home', 'Dashboard', 'dashboard', keep_range=True) }}
+        {{ link('explore.products', 'Products', 'products', also=('explore.product',), keep_range=True) }}
+        {{ link('explore.customers', 'Customers', 'customers', also=('explore.customer',), keep_range=True) }}
+      </ul>
+      {% if has_page('reports.index') or has_page('goals.index') %}<p class="side-label">Plan &amp; Share</p>{% endif %}
+      <ul class="side-links">
+        {{ link('reports.index', 'Reports', 'reports', also=('reports.builder', 'reports.show', 'reports.cohorts', 'reports.pareto'), keep_range=True) }}
+        {{ link('goals.index', 'Goals', 'goals', also=('goals.edit',)) }}
+        {{ link('goals.alerts', 'Alerts', 'alerts', also=('goals.rules',), count=new_alert_count()) }}
+      </ul>
+      <p class="side-label">Data</p>
+      <ul class="side-links">
+        {{ link('data.imports', 'Import', 'import', also=('data.upload', 'data.match', 'data.show_import')) }}
+        {{ link('data.records', 'Records', 'records', also=('data.order',)) }}
+        {{ link('lab.index', 'Performance Lab', 'lab') }}
+      </ul>
+    </nav>
+    <div class="sidebar-foot">
+      <a class="side-account{% if page == 'auth.settings' %} is-here{% endif %}" href="{{ url_for('auth.settings') }}"{% if page == 'auth.settings' %} aria-current="page"{% endif %}>
+        {{ avatar(g.user) }}
+        <span class="side-account-name"><span>{{ g.user.name }}</span><small>Settings</small></span>
+        {{ icon('settings', 16) }}
+      </a>
+    </div>
+  </div>
+</aside>

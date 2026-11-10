@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, page_head, empty %}
+{% from "_filters.html" import filter_bar %}
+{% from "_icons.html" import icon %}
+{% block title %}Performance Lab - {{ APP_NAME }}{% endblock %}
+{% macro ms(value) %}{% if value is none %}&mdash;{% elif value < 10 %}{{ '%.2f'|format(value) }} ms{% else %}{{ '%.1f'|format(value) }} ms{% endif %}{% endmacro %}
+{% block content %}
+  {{ page_head('Performance Lab', 'The same questions asked in different ways, timed on your own data. Each is the fastest of 3 runs.') }}
+
+  <section class="card">
+    <div class="card-head"><h2>Your Data</h2><p>How many rows each table has for this business</p></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Table</th><th>One row is</th><th class="num">Rows</th></tr></thead>
+        <tbody>{% for row in sizes %}<tr><td class="main-cell"><code>{{ row.table }}</code></td><td>{{ row.what }}</td><td class="num">{{ row.rows|number }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </section>
+
+  {% if has_sales %}
+    <div class="section">{{ filter_bar(sc, show=()) }}</div>
+
+    <section class="card">
+      <div class="card-head"><h2>Raw Tables or Rollups?</h2><p>The same answer, read from different tables</p></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Question</th><th class="num">Raw tables</th><th class="num">Rollups</th><th class="num">Faster</th><th class="num">Rows read (raw / rollup)</th><th>Same answer?</th></tr></thead>
+          <tbody>
+          {% for row in results.sources %}
+            <tr>
+              <td class="main-cell">{{ row.name }}</td>
+              <td class="num">{{ ms(row.raw_ms) }}</td>
+              <td class="num">{{ ms(row.rollup_ms) }}</td>
+              <td class="num"><strong>{{ '%.1f'|format(row.speedup) if row.speedup else '—' }}&times;</strong></td>
+              <td class="num">{{ row.raw_rows|number }} / {{ row.rollup_rows|number }}</td>
+              <td>{% if row.same %}<span class="pill pill-good">{{ icon('check', 12) }} Yes</span>{% else %}<span class="pill pill-bad">{{ icon('x', 12) }} No</span>{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="card-note">A rollup adds the sales up once per day when they are imported, so a question reads a few hundred small rows instead of every order. It only works for numbers that add up: "different customers" always reads the orders.</p>
+    </section>
+
+    {% set index = results.index %}
+    <section class="card section">
+      <div class="card-head"><h2>What an Index Does</h2><p>The raw KPI query, with and without the index on (workspace, date, customer)</p></div>
+      <div class="stat-row">
+        <div class="stat"><span>With the index</span><strong>{{ ms(index.with_ms) }}</strong></div>
+        <div class="stat"><span>Pretending it's missing</span><strong>{{ ms(index.without_ms) }}</strong>
+          <small>{% if index.dialect == 'sqlite' %}SQLite's NOT INDEXED{% else %}SET LOCAL enable_indexscan = off{% endif %}</small></div>
+      </div>
+      <div class="grid-2 section-small">
+        <div><h3 class="plan-title">The plan with the index</h3><pre class="plan">{{ index.with_plan|join('\n') }}</pre></div>
+        <div><h3 class="plan-title">The plan without it</h3><pre class="plan">{{ index.without_plan|join('\n') }}</pre></div>
+      </div>
+      <details class="table-view"><summary>Show the SQL</summary><pre class="plan">{{ index.sql }}</pre></details>
+      <p class="card-note">{% if index.dialect == 'sqlite' %}"SEARCH ... USING INDEX" jumps to the right dates; "SCAN" reads the whole table.{% else %}"Index Scan" jumps to the right dates; "Seq Scan" reads the whole table.{% endif %}
+        An index pays off when it lets the database skip most of the table: try Last 30 days, then All time.
+        When most rows are wanted anyway, reading the whole table is just as quick.</p>
+    </section>
+
+    {% set paging = results.paging %}
+    <section class="card section">
+      <div class="card-head"><h2>Deep Pages: OFFSET or Keyset?</h2><p>Page {{ (paging.offset // 50 + 1)|number }} of the Records list, {{ paging.offset|number }} lines in</p></div>
+      <div class="stat-row">
+        <div class="stat"><span>OFFSET {{ paging.offset|number }}</span><strong>{{ ms(paging.offset_ms) }}</strong><small>reads and throws away {{ paging.offset|number }} rows first</small></div>
+        <div class="stat"><span>Keyset (after the last row seen)</span><strong>{{ ms(paging.keyset_ms) }}</strong><small>starts right at the page, with the index</small></div>
+      </div>
+    </section>
+  {% else %}
+    {% call empty('Nothing to measure yet', 'Import some sales (or the sample) and the Lab times real queries on them.', 'lab') %}
+      <a class="button" href="{{ url_for('data.imports') }}">Import sales</a>
+    {% endcall %}
+  {% endif %}
+
+  <div class="grid-2 section">
+    <section class="card">
+      <div class="card-head"><h2>The Cache</h2><p>Answers remembered until new sales arrive</p></div>
+      <div class="stat-row">
+        <div class="stat"><span>Remembered answers</span><strong>{{ cache['items']|length|number }}</strong></div>
+        <div class="stat"><span>Hit rate</span><strong>{{ cache.hit_rate|percent(0) if cache.hit_rate is not none else '—' }}</strong><small>{{ cache.hits|number }} hits, {{ cache.misses|number }} misses</small></div>
+      </div>
+      <form method="post" action="{{ url_for('lab.clear_cache') }}" class="form-actions form-actions-start">
+        {{ csrf() }}<button class="button button-quiet button-small" type="submit">Clear the cache</button>
+      </form>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>Import Speed</h2><p>Batches of 5,000 orders, one transaction</p></div>
+      {% if imports %}
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>File</th><th class="num">Lines</th><th class="num">Time</th><th class="num">Lines a second</th></tr></thead>
+            <tbody>{% for record in imports %}<tr><td>{{ record.filename }}</td><td class="num">{{ record.lines_added|number }}</td><td class="num">{{ '%.2f'|format(record.seconds) }} s</td><td class="num">{{ (record.lines_added / [record.seconds, 0.001]|max)|round|int|number }}</td></tr>{% endfor %}</tbody>
+          </table>
+        </div>
+      {% else %}<p class="muted">No imports yet.</p>{% endif %}
+    </section>
+  </div>
+
+  <section class="card section">
+    <div class="card-head"><h2>A Million Lines</h2><p>flask --app tallyho benchmark, run on a computer</p></div>
+    {% if benchmark %}
+      <p class="section-lead">{{ benchmark.lines|number }} lines and {{ benchmark.orders|number }} orders ({{ benchmark.database }}, {{ benchmark.made_on }}). Imported in {{ '%.1f'|format(benchmark.import_seconds) }} s, {{ benchmark.lines_per_second|round|int|number }} lines a second. Questions about the last {{ benchmark.range_days }} days:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Question</th><th class="num">Raw tables</th><th class="num">Rollups</th><th class="num">Faster</th></tr></thead>
+          <tbody>{% for row in benchmark.sources %}<tr><td class="main-cell">{{ row.name }}</td><td class="num">{{ ms(row.raw_ms) }}</td><td class="num">{{ ms(row.rollup_ms) }}</td><td class="num"><strong>{{ '%.0f'|format(row.speedup) }}&times;</strong></td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+      <p class="card-note">The index, for the last {{ benchmark.index_days or 30 }} days: {{ ms(benchmark.index.with_ms) }} with it, {{ ms(benchmark.index.without_ms) }} without. Deep paging: OFFSET {{ ms(benchmark.paging.offset_ms) }}, keyset {{ ms(benchmark.paging.keyset_ms) }}.</p>
+    {% else %}
+      <p class="muted">Not run yet. On a computer: <code>flask --app tallyho benchmark</code> (it makes its own workspace and deletes it after).</p>
+    {% endif %}
+  </section>
+{% endblock %}

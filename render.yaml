@@ -1,0 +1,44 @@
+# Render "Blueprint": tells Render how to build and run Tally Ho!
+# Render reads this file when you choose New -> Blueprint and pick this repo.
+# The service name becomes the web address: tally-ho.onrender.com
+# (Render adds a few letters if that name is already taken).
+# Every merge into main deploys the site again by itself.
+#
+# The sales live in Neon (free PostgreSQL), not on Render: Render's free plan
+# forgets its files every time it restarts. Step-by-step notes: docs/DEPLOY.md
+services:
+  - type: web
+    name: tally-ho
+    runtime: python  # the version comes from the .python-version file
+    plan: free  # sleeps after 15 quiet minutes; the next visit wakes it up (about 30-50 s)
+    region: singapore  # close to the Philippines, and to Neon's Singapore database
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    # First upgrade-db runs the Alembic migrations (it keeps all data, and does
+    # nothing when the tables are up to date). Then gunicorn serves the app.
+    # One worker with 4 threads: the remembered answers (cache.py) live in the
+    # worker's memory, so one worker means one cache that every page shares.
+    startCommand: flask --app tallyho upgrade-db && gunicorn "tallyho:create_app()" --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      # Signs the login cookie. Render makes a long random one.
+      - key: SECRET_KEY
+        generateValue: true
+      # Neon's connection string (postgresql://...). Render asks for it when
+      # you make the Blueprint; it is never written in this file.
+      - key: DATABASE_URL
+        sync: false
+      # The secret the GitHub Actions timer sends to /tasks/tick (weekly emails,
+      # alerts, old demos). Render makes one; copy it into GitHub's TICK_KEY secret.
+      - key: TICK_KEY
+        generateValue: true
+      # The site's address, for links in emails: https://tally-ho.onrender.com
+      - key: BASE_URL
+        sync: false
+      # The weekly summary email: a Gmail address and its app password.
+      # Without them, emails are only written to Render's log.
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false

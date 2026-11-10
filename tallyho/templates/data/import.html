@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, page_head %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ record.filename }} - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  <a class="back-link" href="{{ url_for('data.imports') }}">{{ icon('chevron-left', 16) }} Import</a>
+  {% call page_head(record.filename, 'Imported ' ~ (record.created_at|nice_datetime) ~ (' by ' ~ record.user.name if record.user else '')) %}
+    {% if record.status == 'done' %}
+      <form method="post" action="{{ url_for('data.undo', import_id=record.id) }}" data-confirm="Remove the {{ record.orders_added|number }} orders this import added?">
+        {{ csrf() }}
+        <button class="button button-quiet" type="submit">{{ icon('undo', 16) }} Undo import</button>
+      </form>
+    {% else %}
+      <span class="pill">Undone {{ record.undone_at|ago }}</span>
+    {% endif %}
+  {% endcall %}
+
+  <div class="stat-row">
+    <div class="stat"><span>Orders added</span><strong>{{ record.orders_added|number }}</strong></div>
+    <div class="stat"><span>Lines added</span><strong>{{ record.lines_added|number }}</strong></div>
+    <div class="stat"><span>Already here</span><strong>{{ (record.orders_skipped + record.orders_replaced)|number }}</strong>
+      <small>{% if record.mode == 'replace' %}replaced{% else %}skipped{% endif %}</small></div>
+    <div class="stat"><span>Problem rows</span><strong>{{ record.rows_failed|number }}</strong></div>
+    <div class="stat"><span>Sales dates</span><strong class="stat-text">{% if record.first_day %}{{ date_range(record.first_day, record.last_day) }}{% else %}&mdash;{% endif %}</strong></div>
+    <div class="stat"><span>Time taken</span><strong>{{ '%.1f'|format(record.seconds) }} s</strong>
+      {% if record.seconds and record.rows_read %}<small>{{ (record.rows_read / record.seconds)|round|int|number }} rows a second</small>{% endif %}</div>
+  </div>
+
+  {% if record.no_cost %}
+    <p class="flash flash-warn">{{ icon('warning', 16) }} This file had no unit cost, so these sales count as costing nothing:
+      their profit equals their revenue. Import a file with a cost column (Replace) to fix it.</p>
+  {% endif %}
+
+  {% if problems %}
+    <section class="section">
+      <div class="section-head">
+        <h2>Rows With Problems</h2>
+        <a class="button button-quiet button-small" href="{{ url_for('data.problems_csv', import_id=record.id) }}">{{ icon('download', 16) }} Download problem rows</a>
+      </div>
+      <p class="muted section-lead">These rows were left out. Fix them in the downloaded file and import it again: the orders that went in are skipped.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="num">Row</th><th>Problem</th></tr></thead>
+          <tbody>{% for p in problems %}<tr><td class="num">{{ p.row }}</td><td>{{ p.problem }}</td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+      {% if more_problems %}<p class="card-note">And {{ plural(more_problems, 'more row') }}: see the download.</p>{% endif %}
+    </section>
+  {% endif %}
+
+  {% if record.status == 'done' and record.orders_added %}
+    <div class="form-actions form-actions-start section">
+      <a class="button" href="{{ url_for('main.home') }}">See the dashboard</a>
+      <a class="button button-quiet" href="{{ url_for('data.records') }}">Browse the records</a>
+    </div>
+  {% endif %}
+{% endblock %}

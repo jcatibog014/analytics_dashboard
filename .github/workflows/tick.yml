@@ -1,0 +1,32 @@
+# Tally Ho!'s timer. Render's free plan has no timer of its own, and it sleeps
+# when nobody visits, so GitHub calls the site every hour (free for public
+# repos). Each call sends the Monday summary emails, checks the alert rules,
+# and deletes finished demos (tallyho/tick.py).
+#
+# Set two repository secrets (GitHub: Settings > Secrets and variables > Actions):
+#   TICK_URL  https://<your-site>.onrender.com/tasks/tick
+#   TICK_KEY  the same value as TICK_KEY in Render's environment
+# Until they are set, this does nothing.
+name: Timer
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call the timer
+        env:
+          TICK_URL: ${{ secrets.TICK_URL }}
+          TICK_KEY: ${{ secrets.TICK_KEY }}
+        run: |
+          if [ -z "$TICK_URL" ] || [ -z "$TICK_KEY" ]; then
+            echo "TICK_URL and TICK_KEY aren't set yet: nothing to do."
+            exit 0
+          fi
+          # The first call can take ~50 s while Render wakes the site up.
+          curl --fail --silent --show-error --max-time 120 -X POST -H "X-Tick-Key: $TICK_KEY" "$TICK_URL"

@@ -1,0 +1,8 @@
+Flask>=3.1,<4
+SQLAlchemy>=2.0,<2.1  # the database toolkit: models.py for app tables, hand-written SQL for the numbers
+alembic>=1.13,<2  # database migrations (flask --app tallyho upgrade-db)
+psycopg[binary]>=3.2,<4  # talks to PostgreSQL (Neon) on the live site; SQLite needs nothing extra
+openpyxl>=3.1,<4  # reads Excel files people import, and writes Excel reports
+tzdata>=2025.1  # time zone data (Windows doesn't have it built in)
+gunicorn>=23  # the web server on Render (Linux only; locally use "flask run")
+pytest>=8

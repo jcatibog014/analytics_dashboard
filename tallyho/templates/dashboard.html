@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_head %}
+{% from "_charts.html" import line, spark, bars, table_view, delta %}
+{% from "_filters.html" import filter_bar %}
+{% from "_kpis.html" import kpi_row %}
+{% from "_icons.html" import icon %}
+{% block title %}Dashboard - {{ APP_NAME }}{% endblock %}
+{% block head %}<script src="{{ url_for('static', filename='charts.js') }}" defer></script>{% endblock %}
+{% block content %}
+  {{ page_head('Dashboard') }}
+  {{ filter_bar(sc, {'measure': measure if measure != 'revenue' else none}) }}
+
+  {# The KPI tiles. Revenue leads, as the one big number. #}
+  {{ kpi_row(cards, sc, now, hero=True) }}
+
+  <section class="card section trend-card">
+    <div class="card-head">
+      <h2>{{ trend_label }} by {{ sc.choice.grain }}</h2>
+      <nav class="segmented" aria-label="What to show">
+        {% for key, name, _kind in measures %}
+          <a href="{{ sc.url(none, {'measure': key if key != 'revenue' else none}) }}"{% if key == measure %} aria-current="true"{% endif %}>{{ name }}</a>
+        {% endfor %}
+      </nav>
+    </div>
+    {{ line(chart, series, summary, partial_note) }}
+    <div class="chart-foot">
+      <nav class="segmented segmented-small" aria-label="Group by">
+        {% for grain in ('day', 'week', 'month') %}
+          {% if not (grain == 'day' and sc.choice.period.days > 400) and not (grain != 'day' and sc.choice.period.days < 8) %}
+            <a href="{{ sc.url(none, {'measure': measure if measure != 'revenue' else none}, grain=grain) }}"{% if grain == sc.choice.grain %} aria-current="true"{% endif %}>{{ grain|capitalize }}</a>
+          {% endif %}
+        {% endfor %}
+      </nav>
+      {{ table_view(trend_table.headers, trend_table.rows) }}
+    </div>
+  </section>
+
+  <div class="grid-3 section">
+    {% for part in parts %}
+      <section class="card chart">
+        <div class="card-head"><h2>{{ part.title }}</h2><p>Revenue</p></div>
+        {{ bars(part.bars, part.title) }}
+        {{ table_view(part.headers, part.rows) }}
+      </section>
+    {% endfor %}
+  </div>
+
+  <section class="card section">
+    <div class="card-head">
+      <h2>Top Products</h2>
+      {% if has_page('explore.products') %}<a href="{{ sc.url('explore.products') }}">All products {{ icon('chevron-right', 14) }}</a>{% endif %}
+    </div>
+    <div class="table-wrap">
+      <table class="rank-table">
+        <thead><tr><th class="num">#</th><th>Product</th><th class="num">Revenue</th><th class="share-col">Share of revenue</th><th class="num">Units</th><th class="num">Gross profit</th>{% if sc.choice.compare %}<th class="num">Change</th>{% endif %}</tr></thead>
+        <tbody>
+        {% for row in top_products %}
+          <tr>
+            <td class="num muted">{{ row.place }}</td>
+            <td class="main-cell">{% if has_page('explore.product') %}<a href="{{ sc.url('explore.product', product_id=row.id) }}">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %} <span class="muted small">{{ row.sku }}</span></td>
+            <td class="num">{{ row.revenue|money }}</td>
+            <td class="share-col"><span class="share"><svg class="share-bar" aria-hidden="true"><rect class="share-track" width="100%" height="100%" rx="3"></rect><rect class="share-fill" width="{{ (row.share * 100)|round(1) }}%" height="100%" rx="3"></rect></svg><span class="num">{{ row.share|percent }}</span></span></td>
+            <td class="num">{{ row.units|number }}</td>
+            <td class="num">{{ row.profit|money }}</td>
+            {% if sc.choice.compare %}<td class="num">{% if row.change is none %}<span class="muted">New</span>{% else %}{% if row.change|abs < 0.005 %}<span class="muted">0%</span>{% else %}<span class="{{ 'good' if row.change > 0 else 'bad' }}">{{ '%+.0f'|format(row.change * 100) }}%</span>{% endif %}{% endif %}</td>{% endif %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

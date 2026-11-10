@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_head, avatar, empty %}
+{% from "_charts.html" import line, table_view %}
+{% from "_filters.html" import filter_bar %}
+{% from "_kpis.html" import kpi_row %}
+{% block title %}Customers - {{ APP_NAME }}{% endblock %}
+{% block head %}<script src="{{ url_for('static', filename='charts.js') }}" defer></script>{% endblock %}
+{% block content %}
+  {{ page_head('Customers', 'Who buys, who is new, who comes back, and when they shop.') }}
+  {{ filter_bar(sc) }}
+
+  {% call kpi_row(cards, sc, now, label='Customers') %}
+    <article class="kpi">
+      <h2 class="kpi-label">Revenue per Customer</h2>
+      <p class="kpi-value">{{ (per_customer|round|int)|money if per_customer else '—' }}</p>
+      <p class="kpi-foot muted">{{ now.revenue|money }} from {{ plural(now.customers, 'customer') }}</p>
+    </article>
+  {% endcall %}
+
+  <section class="card section">
+    <div class="card-head"><h2>Customers by {{ sc.choice.grain }}</h2><p>Different customers, and how many were new</p></div>
+    {{ line(chart, series, 'Customers and new customers by ' ~ sc.choice.grain ~ '.', partial_note) }}
+    <div class="chart-foot">{{ table_view(table.headers, table.rows) }}</div>
+  </section>
+
+  <div class="grid-wide-left section">
+    <section class="card chart">
+      <div class="card-head"><h2>When Customers Order</h2><p>Orders by weekday and hour</p></div>
+      {% if heat.biggest %}
+        <div class="heat-scroll">
+          <table class="heatmap">
+            <thead><tr><th><span class="visually-hidden">Day</span></th>{% for hour in heat.hours %}<th scope="col">{% if loop.index0 % 2 == 0 %}{{ hour_label(hour) }}{% endif %}</th>{% endfor %}</tr></thead>
+            <tbody>
+            {% for row in heat.rows %}
+              <tr>
+                <th scope="row">{{ row.name }}</th>
+                {% for cell in row.cells %}
+                  <td class="heat heat-{{ cell.level }}" tabindex="0" data-tip-label="{{ row.name }}, {{ hour_label(cell.hour) }}" data-tip-value="{{ plural(cell.orders, 'order') }}" data-tip-note="{{ cell.revenue|money }}"><span class="visually-hidden">{{ row.name }} {{ hour_label(cell.hour) }}: {{ plural(cell.orders, 'order') }}</span></td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="heat-legend" aria-hidden="true"><span>Fewer</span>{% for level in range(6) %}<i class="heat heat-{{ level }}"></i>{% endfor %}<span>More orders</span></div>
+        {{ table_view(['Day', 'Orders', 'Busiest hour'], heat.table) }}
+      {% else %}
+        <p class="muted">The files had no times, so there's nothing to show here. Add a time to the date column to see this.</p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Top Customers</h2><p>By revenue</p></div>
+      {% if buyers %}
+        <ul class="people-list">
+          {% for buyer in buyers %}
+            <li>
+              {{ avatar(buyer, 'small') }}
+              <span class="people-name"><a href="{{ sc.url('explore.customer', customer_id=buyer.id) }}">{{ buyer.name }}</a>
+                {% if buyer.is_new %}<span class="pill pill-accent">New</span>{% endif %}</span>
+              <span class="num">{{ buyer.revenue|money }} <small class="muted">{{ plural(buyer.orders, 'order') }}</small></span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="muted">No customer names on these sales.</p>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

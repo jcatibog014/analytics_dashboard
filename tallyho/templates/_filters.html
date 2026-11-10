@@ -1,0 +1,50 @@
+{# One row above the charts: the dates first, then the comparison, then the filters.
+   It scopes everything below it. keep: other address parts to carry along (measure...).
+   Without JavaScript the Apply button sends it; with it, each menu applies itself. #}
+{% from "_icons.html" import icon %}
+{% macro filter_bar(sc, keep={}, show=('region', 'channel', 'category')) %}
+  <form method="get" class="range-bar" data-range-bar>
+    {% for name, value in keep.items() %}{% if value %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endif %}{% endfor %}
+    <label class="range-field">
+      <span class="visually-hidden">Dates</span>
+      {{ icon('calendar', 16) }}
+      <select name="range" data-range-select>
+        {% for key, name in PRESETS %}<option value="{{ key }}"{% if key == sc.choice.key %} selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select>
+    </label>
+    <span class="custom-dates{% if sc.choice.key != 'custom' %} is-folded{% endif %}" data-custom-dates>
+      <label><span class="visually-hidden">From</span><input type="date" name="from" value="{{ sc.choice.period.first|iso }}"
+        {% if sc.bounds[0] %}min="{{ (sc.bounds[0])|iso }}"{% endif %}></label>
+      <span class="muted" aria-hidden="true">to</span>
+      <label><span class="visually-hidden">To</span><input type="date" name="to" value="{{ sc.choice.period.last|iso }}"></label>
+    </span>
+    {% if sc.choice.key != 'all' %}
+      <label class="range-field">
+        <span class="visually-hidden">Compare with</span>
+        <select name="compare" data-auto-submit>
+          {% for key, name in COMPARES %}<option value="{{ key }}"{% if key == sc.choice.compare_key %} selected{% endif %}>{{ 'vs ' ~ name|lower if key != 'none' else name }}</option>{% endfor %}
+        </select>
+      </label>
+    {% endif %}
+    {% for name, plural, everything in (('region', 'regions', 'All regions'), ('channel', 'channels', 'All channels'), ('category', 'categories', 'All categories')) %}
+      {% if name in show and sc.options[plural]|length > 1 %}
+        <label class="range-field">
+          <span class="visually-hidden">{{ name|capitalize }}</span>
+          <select name="{{ name }}" data-auto-submit>
+            <option value="">{{ everything }}</option>
+            {% for id_, label in sc.options[plural] %}<option value="{{ id_ }}"{% if sc.chosen.get(name, (none,))[0] == id_ %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+      {% endif %}
+    {% endfor %}
+    <button class="button button-quiet" type="submit" data-apply-button>Apply</button>
+  </form>
+  <p class="range-line">
+    <strong>{{ date_range(sc.choice.period.first, sc.choice.period.last) }}</strong>
+    {% if sc.choice.compare %}<span class="muted">compared with {{ date_range(sc.choice.compare.first, sc.choice.compare.last) }}</span>{% endif %}
+    {% for name, picked in sc.chosen.items() %}
+      <a class="chip" href="{{ sc.url(none, keep, **{name: none}) }}"
+         title="Show every {{ name }}">{{ picked[1] }} {{ icon('x', 12) }}<span class="visually-hidden">: remove this filter</span></a>
+    {% endfor %}
+  </p>
+{% endmacro %}

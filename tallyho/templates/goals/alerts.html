@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, page_head %}
+{% from "_icons.html" import icon %}
+{% block title %}Alerts - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  {% call page_head('Alerts', 'Days that were far from the usual for that weekday. Checked after every import and every hour.') %}
+    {% if unseen %}
+      <form method="post" action="{{ url_for('goals.mark_seen') }}">{{ csrf() }}<button class="button button-quiet" type="submit">{{ icon('check', 16) }} Mark all as seen</button></form>
+    {% endif %}
+  {% endcall %}
+
+  {% if alerts %}
+    <ul class="alert-list">
+      {% for alert in alerts %}
+        {% set kind = rule_kind(alert.rule) %}
+        {% set went_down = alert.value < alert.expected %}
+        <li class="card alert-item{% if alert.seen_at is none %} is-new{% endif %}">
+          <span class="alert-icon {{ 'bad' if went_down else 'good' }}">{{ icon('down' if went_down else 'up', 18) }}</span>
+          <div class="alert-text">
+            <p><strong>{{ alert.day.strftime('%A') }}, {{ alert.day|nice_date }}</strong>:
+              {{ subject(alert.rule) }} {{ verb(alert.rule, past=True) }} <strong>{{ kpi(alert.value|round|int, kind) }}</strong>,
+              {{ '%.0f'|format((alert.change|abs) * 100) }}% {{ 'below' if went_down else 'above' }} the usual {{ kpi(alert.expected|round|int, kind) }}.</p>
+            <p class="muted small">Rule: {{ describe(alert.rule) }}</p>
+          </div>
+          {% if alert.seen_at is none %}<span class="pill pill-accent">New</span>{% endif %}
+          <a class="button button-quiet button-small" href="{{ url_for('main.home', range='custom', **{'from': alert.day|iso, 'to': alert.day|iso}) }}">See the day</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="card"><p class="muted">No alerts. {% if rules %}No recent day broke a rule.{% else %}Add a rule below to start.{% endif %}</p></div>
+  {% endif %}
+
+  <section class="section">
+    <div class="section-head"><h2>Rules</h2></div>
+    {% if rules %}
+      <div class="table-wrap">
+        <table>
+          <tbody>
+          {% for rule in rules %}
+            <tr>
+              <td class="main-cell">{{ describe(rule) }}</td>
+              <td>{% if rule.is_active %}<span class="pill pill-good">On</span>{% else %}<span class="pill">Off</span>{% endif %}</td>
+              <td class="num"><div class="row-actions">
+                <form method="post" action="{{ url_for('goals.change_rule', rule_id=rule.id) }}">
+                  {{ csrf() }}<input type="hidden" name="action" value="toggle">
+                  <button class="button button-quiet button-tiny" type="submit">{{ 'Switch off' if rule.is_active else 'Switch on' }}</button>
+                </form>
+                <form method="post" action="{{ url_for('goals.change_rule', rule_id=rule.id) }}" data-confirm="Delete this rule and its alerts?">
+                  {{ csrf() }}<input type="hidden" name="action" value="delete">
+                  <button class="icon-button" type="submit" title="Delete">{{ icon('trash', 16) }}<span class="visually-hidden">Delete rule</span></button>
+                </form>
+              </div></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('goals.add_rule') }}" class="card rule-form{% if rules %} section{% endif %}">
+      {{ csrf() }}
+      <p class="rule-sentence">Tell me when a day's
+        <select name="measure" aria-label="Number">{% for key, name, _kind in measures %}<option value="{{ key }}">{{ name|lower }}</option>{% endfor %}</select>
+        is
+        <input type="number" name="percent" value="20" min="1" max="500" aria-label="Percent" required>%
+        or more
+        <select name="direction" aria-label="Direction"><option value="drop">below</option><option value="rise">above</option></select>
+        the usual for that weekday, in
+        <select name="region" aria-label="Region"><option value="">every region</option>{% for id_, name in regions %}<option value="{{ id_ }}">{{ name }}</option>{% endfor %}</select>
+        and
+        <select name="channel" aria-label="Channel"><option value="">every channel</option>{% for id_, name in channels %}<option value="{{ id_ }}">{{ name }}</option>{% endfor %}</select>.
+      </p>
+      <div class="form-actions"><button class="button" type="submit">Add rule</button></div>
+    </form>
+  </section>
+{% endblock %}

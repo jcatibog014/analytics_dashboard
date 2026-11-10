@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, page_head %}
+{% from "_icons.html" import icon %}
+{% block title %}Import - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  {{ page_head('Import', 'Bring in your sales from a CSV or Excel file. One row is one line of an order.') }}
+
+  <div class="grid-wide-left">
+    <section class="card">
+      <div class="card-head"><h2>Upload a File</h2><p>CSV or Excel (.xlsx), up to {{ MAX_UPLOAD_MB }} MB</p></div>
+      <form method="post" action="{{ url_for('data.upload') }}" enctype="multipart/form-data" class="upload-form">
+        {{ csrf() }}
+        <label class="drop-zone">
+          {{ icon('import', 28) }}
+          <span><strong>Choose a file</strong> or drop it here</span>
+          <input type="file" name="file" accept=".csv,.txt,.tsv,.xlsx" required>
+        </label>
+        <div class="form-actions"><button class="button" type="submit">Upload and match columns</button></div>
+      </form>
+      <p class="card-note">Next you tell us which column is which. Orders already here are skipped, so importing
+        the same file twice is safe.</p>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>What a File Needs</h2></div>
+      <ul class="needs-list">
+        <li>{{ icon('check', 16) }} <span><strong>Order number</strong>, <strong>date</strong>, <strong>quantity</strong></span></li>
+        <li>{{ icon('check', 16) }} <span><strong>Product code</strong> or <strong>name</strong></span></li>
+        <li>{{ icon('check', 16) }} <span><strong>Unit price</strong> or <strong>line total</strong></span></li>
+        <li class="muted">{{ icon('plus', 16) }} <span>Nice to have: unit cost (for profit), customer, region, channel, category, discount, time</span></li>
+      </ul>
+      <div class="form-actions form-actions-start">
+        <a class="button button-quiet button-small" href="{{ url_for('data.sample_csv') }}">{{ icon('download', 16) }} Download a sample CSV</a>
+        {% if not has_sales %}
+          <form method="post" action="{{ url_for('data.load_sample') }}">
+            {{ csrf() }}
+            <button class="button button-quiet button-small" type="submit">Load 18 months of sample sales</button>
+          </form>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <section class="section">
+    <div class="section-head"><h2>Import History</h2>{% if history %}<p>Undo takes away the orders an import added.</p>{% endif %}</div>
+    {% if history %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>When</th><th>Sales dates</th><th class="num">Orders added</th><th class="num">Skipped</th><th class="num">Problem rows</th><th>Status</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+          <tbody>
+          {% for record in history %}
+            <tr>
+              <td class="main-cell"><a href="{{ url_for('data.show_import', import_id=record.id) }}">{{ record.filename }}</a></td>
+              <td class="nowrap">{{ record.created_at|ago }}</td>
+              <td class="nowrap">{% if record.first_day %}{{ date_range(record.first_day, record.last_day) }}{% else %}<span class="muted">&mdash;</span>{% endif %}</td>
+              <td class="num">{{ record.orders_added|number }}</td>
+              <td class="num">{{ (record.orders_skipped + record.orders_replaced)|number }}</td>
+              <td class="num">{% if record.rows_failed %}<span class="pill pill-warn">{{ record.rows_failed|number }}</span>{% else %}0{% endif %}</td>
+              <td>{% if record.status == 'done' %}<span class="pill pill-good">Imported</span>{% else %}<span class="pill">Undone</span>{% endif %}</td>
+              <td class="num">
+                {% if record.status == 'done' %}
+                  <form method="post" action="{{ url_for('data.undo', import_id=record.id) }}" data-confirm="Remove the {{ record.orders_added|number }} orders this import added?">
+                    {{ csrf() }}
+                    <button class="button button-quiet button-tiny" type="submit">{{ icon('undo', 14) }} Undo</button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="card"><p class="muted">Nothing imported yet.</p></div>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_head, empty %}
+{% from "_charts.html" import bars, table_view %}
+{% from "_filters.html" import filter_bar %}
+{% from "_icons.html" import icon %}
+{% block title %}Products - {{ APP_NAME }}{% endblock %}
+{% block head %}<script src="{{ url_for('static', filename='charts.js') }}" defer></script>{% endblock %}
+{% block content %}
+  {% if 'category' in sc.chosen %}
+    <nav class="breadcrumbs" aria-label="You are here"><a href="{{ sc.url('explore.products', category=none) }}">Products</a> {{ icon('chevron-right', 14) }} <span>{{ sc.chosen.category[1] }}</span></nav>
+    {{ page_head(sc.chosen.category[1], 'Every product in this category, best first.') }}
+  {% else %}
+    {{ page_head('Products', 'Pick a category or a product to see more.') }}
+  {% endif %}
+  {{ filter_bar(sc, {'sort': sort if sort != 'revenue' else none}) }}
+
+  {% if categories and categories.bars %}
+    <section class="card chart">
+      <div class="card-head"><h2>Categories</h2><p>Revenue. Pick one to see its products.</p></div>
+      {{ bars(categories.bars, 'Revenue by category') }}
+      {{ table_view(categories.headers, categories.rows) }}
+    </section>
+  {% endif %}
+
+  <section class="section">
+    <div class="section-head">
+      <h2>{{ plural(rows|length, 'Product') }}</h2>
+      <nav class="segmented" aria-label="Sort by">
+        {% for key, name in sorts %}<a href="{{ sc.url(none, {'sort': key if key != 'revenue' else none}) }}"{% if key == sort %} aria-current="true"{% endif %}>{{ name }}</a>{% endfor %}
+      </nav>
+    </div>
+    {% if rows %}
+      <div class="table-wrap">
+        <table class="rank-table">
+          <thead><tr><th class="num">#</th><th>Product</th><th>Category</th><th class="num">Revenue</th><th class="share-col">Share of revenue</th><th class="num">Units</th><th class="num">Orders</th><th class="num">Gross profit</th><th class="num">Margin</th>{% if sc.choice.compare %}<th class="num">Change</th>{% endif %}</tr></thead>
+          <tbody>
+          {% for row in rows %}
+            <tr>
+              <td class="num muted">{{ row.place }}</td>
+              <td class="main-cell"><a href="{{ sc.url('explore.product', product_id=row.id) }}">{{ row.name }}</a> <span class="muted small">{{ row.sku }}</span></td>
+              <td class="nowrap">{{ row.category }}</td>
+              <td class="num">{{ row.revenue|money }}</td>
+              <td class="share-col"><span class="share"><svg class="share-bar" aria-hidden="true"><rect class="share-track" width="100%" height="100%" rx="3"></rect><rect class="share-fill" width="{{ (row.share * 100)|round(1) }}%" height="100%" rx="3"></rect></svg><span class="num">{{ row.share|percent }}</span></span></td>
+              <td class="num">{{ row.units|number }}</td>
+              <td class="num">{{ row.orders|number }}</td>
+              <td class="num">{{ row.profit|money }}</td>
+              <td class="num">{{ row.margin|percent }}</td>
+              {% if sc.choice.compare %}<td class="num">{% if row.change is none %}<span class="muted">New</span>{% elif row.change|abs < 0.005 %}<span class="muted">0%</span>{% else %}<span class="{{ 'good' if row.change > 0 else 'bad' }}">{{ '%+.0f'|format(row.change * 100) }}%</span>{% endif %}</td>{% endif %}
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      {% call empty('No products sold in these dates', 'Try a longer date range.', 'products') %}{% endcall %}
+    {% endif %}
+  </section>
+{% endblock %}

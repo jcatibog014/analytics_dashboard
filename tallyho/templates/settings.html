@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field, page_head %}
+{% block title %}Settings - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  {{ page_head('Settings') }}
+  <div class="settings">
+    {# The theme lives in the browser, so this needs JavaScript. app.js shows it. #}
+    <section class="setting" data-theme-settings hidden>
+      <div class="setting-text">
+        <h2>Appearance</h2>
+        <p>Device follows your phone or computer. This choice is saved on this device only.</p>
+      </div>
+      <fieldset class="theme-choice">
+        <legend class="visually-hidden">Theme</legend>
+        <label><input type="radio" name="theme" value="system"><span>Device</span></label>
+        <label><input type="radio" name="theme" value="light"><span>Light</span></label>
+        <label><input type="radio" name="theme" value="dark"><span>Dark</span></label>
+      </fieldset>
+    </section>
+
+    {# The demo sees these as examples, switched off. The server refuses its changes anyway. #}
+    {% set locked = 'disabled' if g.user.is_demo else '' %}
+    <section class="setting">
+      <div class="setting-text">
+        <h2>Business Name</h2>
+        <p>Shown at the top of the menu and on printed reports.</p>
+      </div>
+      <form method="post">
+        {{ csrf() }}
+        <input type="hidden" name="action" value="business">
+        <fieldset class="stack plain-fieldset" {{ locked }}>
+          {{ field('business', 'Name', g.workspace.name, errors.business, attrs='required maxlength="80"') }}
+          <div class="form-actions"><button class="button" type="submit">Save name</button></div>
+        </fieldset>
+      </form>
+    </section>
+
+    {% block more_settings %}{% include "_settings_more.html" ignore missing %}{% endblock %}
+
+    <section class="setting">
+      <div class="setting-text">
+        <h2>Your Name</h2>
+        <p>Shown in the menu and on reports you save.</p>
+      </div>
+      <form method="post">
+        {{ csrf() }}
+        <input type="hidden" name="action" value="name">
+        <fieldset class="stack plain-fieldset" {{ locked }}>
+          {{ field('name', 'Name', g.user.name, errors.name, attrs='required maxlength="80"') }}
+          <div class="form-actions"><button class="button" type="submit">Save name</button></div>
+        </fieldset>
+      </form>
+    </section>
+
+    <section class="setting">
+      <div class="setting-text">
+        <h2>Your Password</h2>
+        <p>Changing your password logs you out on your other devices.</p>
+      </div>
+      <form method="post">
+        {{ csrf() }}
+        <input type="hidden" name="action" value="password">
+        <fieldset class="stack plain-fieldset" {{ locked }}>
+          {{ field('current_password', 'Current password', '', errors.password_current, type='password', attrs='autocomplete="current-password" required') }}
+          {{ field('new_password', 'New password', '', errors.new_password, type='password', hint='At least 8 characters', attrs='autocomplete="new-password" required') }}
+          {{ field('confirm_password', 'New password again', type='password', attrs='autocomplete="new-password" required') }}
+          <div class="form-actions"><button class="button" type="submit">Change password</button></div>
+        </fieldset>
+      </form>
+    </section>
+
+    <section class="setting">
+      <div class="setting-text">
+        <h2>Your Account</h2>
+        {% if g.user.is_demo %}
+          <p>You are using the demo, so the names and password above can't be changed.</p>
+        {% else %}
+          <p>You are logged in as {{ g.user.email }}.</p>
+        {% endif %}
+      </div>
+      <div class="form-actions">
+        <form method="post" action="{{ url_for('auth.logout') }}">
+          {{ csrf() }}
+          <button class="button button-quiet" type="submit">Log out</button>
+        </form>
+      </div>
+    </section>
+  </div>
+{% endblock %}

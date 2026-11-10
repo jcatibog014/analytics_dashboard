@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+Thumbs.db
+.env
+# The local SQLite database (your own sales) lives here. Never commit it.
+instance/
+# Big sample files made by "flask make-sample" (they can be 100 MB)
+*.sample.csv

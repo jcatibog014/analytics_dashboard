@@ -1,0 +1,22 @@
+{# A row of KPI tiles. hero=True makes the first one the page's big number. #}
+{% from "_charts.html" import spark, delta %}
+{% from "_icons.html" import icon %}
+{% macro kpi_row(cards, sc, now, hero=False, label='Key numbers') %}
+  <section class="kpis{% if not hero %} kpis-plain{% endif %}" aria-label="{{ label }}">
+    {% for card in cards %}
+      <article class="kpi{% if hero and loop.first %} kpi-hero{% endif %}">
+        <h2 class="kpi-label">{{ card.label }}
+          <span class="kpi-help" tabindex="0" title="{{ card.meaning }}">{{ icon('info', 14) }}<span class="visually-hidden">{{ card.meaning }}</span></span>
+        </h2>
+        <p class="kpi-value">{{ card.value|kpi_short(card.kind) }}</p>
+        <p class="kpi-foot">
+          {% if sc.choice.compare %}{{ delta(card, sc.compare_label) }}{% endif %}
+          {% if card.key == 'profit' and now.margin is not none %}<span class="muted">{{ now.margin|percent }} margin</span>{% endif %}
+          {% if card.key == 'customers' and hero %}<span class="muted">{{ now.new_customers|number }} new</span>{% endif %}
+        </p>
+        {{ spark(card.spark) }}
+      </article>
+    {% endfor %}
+    {% if caller %}{{ caller() }}{% endif %}
+  </section>
+{% endmacro %}

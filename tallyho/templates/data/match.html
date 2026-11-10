@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, page_head %}
+{% from "_icons.html" import icon %}
+{% block title %}Match Columns - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  <a class="back-link" href="{{ url_for('data.imports') }}">{{ icon('chevron-left', 16) }} Import</a>
+  {{ page_head('Match Columns', filename ~ ' · ' ~ plural(row_count, 'row')) }}
+
+  {% if errors %}
+    <div class="form-error" role="alert">{% for error in errors %}<p>{{ error }}</p>{% endfor %}</div>
+  {% elif remembered %}
+    <p class="flash">This file looks like one you imported before, so its columns are matched the same way.</p>
+  {% endif %}
+
+  {% if problems %}
+    <section class="section">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="num">Row</th><th>Problem</th></tr></thead>
+          <tbody>{% for p in problems %}<tr><td class="num">{{ p.row }}</td><td>{{ p.problem }}</td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="section">
+    <div class="section-head"><h2>Your File</h2><p>The first rows, as we read them.</p></div>
+    <div class="table-wrap preview-table">
+      <table>
+        <thead><tr>{% for header in headers %}<th>{{ header }}</th>{% endfor %}</tr></thead>
+        <tbody>{% for row in preview %}<tr>{% for cell in row %}<td class="nowrap">{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </section>
+
+  <form method="post" class="section">
+    {{ csrf() }}
+    <div class="card">
+      <div class="card-head"><h2>Which Column Is Which?</h2><p>We guessed from the column names. Check them, then import.</p></div>
+      <div class="match-grid">
+        {% for f in fields %}
+          <label class="match-row{% if f.required %} is-required{% endif %}">
+            <span class="match-label">
+              <strong>{{ f.label }}</strong>{% if f.required %} <span class="pill pill-accent">Needed</span>{% endif %}
+              {% if f.hint %}<small>{{ f.hint }}</small>{% endif %}
+            </span>
+            <select name="{{ f.key }}">
+              <option value="">Not in my file</option>
+              {% for header in headers %}<option value="{{ header }}"{% if mapping.get(f.key) == header %} selected{% endif %}>{{ header }}</option>{% endfor %}
+            </select>
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card section">
+      <div class="field-row">
+        <label class="field">
+          <span class="field-label">How are the dates written?</span>
+          <select name="date_format">
+            {% for value, text in date_formats %}<option value="{{ value }}"{% if value == date_format %} selected{% endif %}>{{ text }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="field">
+          <span class="field-label">Orders that are already here</span>
+          <select name="mode">
+            <option value="skip"{% if mode == 'skip' %} selected{% endif %}>Skip them (keep what's here)</option>
+            <option value="replace"{% if mode == 'replace' %} selected{% endif %}>Replace them with this file's</option>
+          </select>
+        </label>
+      </div>
+      {% if date_note %}<p class="card-note">{{ icon('info', 16) }} {{ date_note }}</p>{% endif %}
+    </div>
+
+    <div class="form-actions section">
+      <button class="button button-quiet" type="submit" form="cancel-form">Cancel</button>
+      <button class="button" type="submit">Import {{ plural(row_count, 'row') }}</button>
+    </div>
+  </form>
+  <form id="cancel-form" method="post" action="{{ url_for('data.cancel', token=token) }}">{{ csrf() }}</form>
+{% endblock %}
