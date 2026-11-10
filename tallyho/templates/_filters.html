@@ -22,7 +22,7 @@
       <label class="range-field">
         <span class="visually-hidden">Compare with</span>
         <select name="compare" data-auto-submit>
-          {% for key, name in COMPARES %}<option value="{{ key }}"{% if key == sc.choice.compare_key %} selected{% endif %}>{{ 'vs ' ~ name|lower if key != 'none' else name }}</option>{% endfor %}
+          {% for key, name in COMPARES %}<option value="{{ key }}"{% if key == sc.choice.compare_key %} selected{% endif %}>{{ 'Compare to ' ~ name|lower if key != 'none' else name }}</option>{% endfor %}
         </select>
       </label>
     {% endif %}

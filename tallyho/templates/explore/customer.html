@@ -44,8 +44,13 @@
       {% if favourites %}
         <ul class="people-list">
           {% for row in favourites %}
-            <li><a href="{{ sc.url('explore.product', product_id=row.id) }}">{{ row.name }}</a>
-              <span class="num">{{ row.units|number }} &times; <small class="muted">{{ row.revenue|money }}</small></span></li>
+            <li>
+              <span class="people-name">
+                <span class="people-title"><a href="{{ sc.url('explore.product', product_id=row.id) }}">{{ row.name }}</a></span>
+                <small>{{ plural(row.units, 'bought', 'bought') }}</small>
+              </span>
+              <span class="people-amount num">{{ row.revenue|money }}</span>
+            </li>
           {% endfor %}
         </ul>
       {% else %}

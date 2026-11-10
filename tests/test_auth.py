@@ -83,11 +83,10 @@ def test_change_password_needs_the_current_one(owner):
 
 
 def test_rename_the_business_and_yourself(app, owner):
-    post(owner, "/settings", {"action": "business", "business": "Kape Corner"})
-    post(owner, "/settings", {"action": "name", "name": "Olivia Cruz"})
+    post(owner, "/settings", {"action": "profile", "business": "Kape Corner", "name": "Olivia Cruz"})
     page = owner.get("/settings").get_data(as_text=True)
-    assert "Kape Corner" in page and "Olivia Cruz" in page
-    assert post(owner, "/settings", {"action": "name", "name": ""}).status_code == 400
+    assert "Kape Corner" in page and "Olivia Cruz" in page and "Save profile" in page
+    assert post(owner, "/settings", {"action": "profile", "business": "Kape Corner", "name": ""}).status_code == 400
 
 
 def test_settings_has_theme_and_log_out(owner):
@@ -124,7 +123,9 @@ def test_demo_cannot_change_settings(app, client):
         s.commit()
     from .conftest import log_in_as
     log_in_as(client, user_id)
-    assert post(client, "/settings", {"action": "name", "name": "Hacker"}).status_code == 403
+    assert post(client, "/settings", {"action": "profile", "business": "X", "name": "Hacker"}).status_code == 403
+    # Developer mode is only a display choice, so the demo may switch it.
+    assert post(client, "/settings", {"action": "developer", "developer_mode": "1"}).status_code == 302
     assert "disabled" in client.get("/settings").get_data(as_text=True)
 
 

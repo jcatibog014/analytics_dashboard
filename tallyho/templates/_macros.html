@@ -49,3 +49,13 @@
     {% if caller %}<div class="empty-actions">{{ caller() }}</div>{% endif %}
   </div>
 {% endmacro %}
+
+{# An on/off switch: a real checkbox (works without JavaScript), drawn as a slider that turns logo gold when on.
+   auto=True saves it as soon as it is switched (app.js), so its form's Save button hides. #}
+{% macro switch(name, label, checked=False, auto=False) %}
+  <label class="switch">
+    <input type="checkbox" role="switch" name="{{ name }}" value="1"{% if checked %} checked{% endif %}{% if auto %} data-auto-submit{% endif %}>
+    <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+    <span>{{ label }}</span>
+  </label>
+{% endmacro %}

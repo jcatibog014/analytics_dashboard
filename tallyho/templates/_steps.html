@@ -1,0 +1,13 @@
+{# The import's steps, so it is clear where you are and what comes next. #}
+{% from "_icons.html" import icon %}
+{% macro import_steps(current) %}
+  <ol class="steps" aria-label="Import steps">
+    {% for name in ('Upload', 'Map columns', 'Review', 'Done') %}
+      {% set number = loop.index %}
+      <li class="step{% if number < current %} is-done{% elif number == current %} is-here{% endif %}"{% if number == current %} aria-current="step"{% endif %}>
+        <span class="step-dot">{% if number < current or (number == 4 and current == 4) %}{{ icon('check', 14) }}{% else %}{{ number }}{% endif %}</span>
+        <span>{{ name }}</span>
+      </li>
+    {% endfor %}
+  </ol>
+{% endmacro %}

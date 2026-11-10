@@ -55,10 +55,13 @@
         <ul class="people-list">
           {% for buyer in buyers %}
             <li>
-              {{ avatar(buyer, 'small') }}
-              <span class="people-name"><a href="{{ sc.url('explore.customer', customer_id=buyer.id) }}">{{ buyer.name }}</a>
-                {% if buyer.is_new %}<span class="pill pill-accent">New</span>{% endif %}</span>
-              <span class="num">{{ buyer.revenue|money }} <small class="muted">{{ plural(buyer.orders, 'order') }}</small></span>
+              {{ avatar(buyer) }}
+              <span class="people-name">
+                <span class="people-title"><a href="{{ sc.url('explore.customer', customer_id=buyer.id) }}">{{ buyer.name }}</a>
+                  {% if buyer.is_new %}<span class="pill pill-accent">New</span>{% endif %}</span>
+                <small>{{ plural(buyer.orders, 'order') }}</small>
+              </span>
+              <span class="people-amount num">{{ buyer.revenue|money }}</span>
             </li>
           {% endfor %}
         </ul>

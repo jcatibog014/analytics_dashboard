@@ -224,28 +224,28 @@ def logout():
 def settings():
     errors = {}
     if request.method == "POST":
-        not_for_demo("The demo can't change its account.")
         action = request.form.get("action")
         s = db.session()
-        if action == "name":
+        if action == "developer":
+            # A display preference, so the demo may switch it too.
+            g.user.developer_mode = request.form.get("developer_mode") == "1"
+            s.commit()
+            flash("Developer mode is on: the Performance Lab is in the menu." if g.user.developer_mode
+                  else "Developer mode is off.")
+            return redirect(url_for("auth.settings"))
+        not_for_demo("The demo can't change its account.")
+        if action == "profile":
+            business = request.form.get("business", "").strip()
             name = request.form.get("name", "").strip()
-            problem = name_problem(name)
-            if problem:
-                errors["name"] = problem
-            else:
+            if name_problem(business):
+                errors["business"] = name_problem(business).replace("your name", "the business name")
+            if name_problem(name):
+                errors["name"] = name_problem(name)
+            if not errors:
+                g.workspace.name = business
                 g.user.name = name
                 s.commit()
-                flash("Your name has been changed.")
-                return redirect(url_for("auth.settings"))
-        elif action == "business":
-            name = request.form.get("business", "").strip()
-            problem = name_problem(name)
-            if problem:
-                errors["business"] = problem.replace("your name", "the name")
-            else:
-                g.workspace.name = name
-                s.commit()
-                flash("The business name has been changed.")
+                flash("Your profile has been saved.")
                 return redirect(url_for("auth.settings"))
         elif action == "weekly":
             g.user.weekly_email = request.form.get("weekly_email") == "1"

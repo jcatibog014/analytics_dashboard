@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% from "_macros.html" import csrf, page_head %}
 {% from "_icons.html" import icon %}
-{% block title %}Match Columns - {{ APP_NAME }}{% endblock %}
+{% from "_steps.html" import import_steps %}
+{% block title %}Map Columns - {{ APP_NAME }}{% endblock %}
 {% block content %}
-  <a class="back-link" href="{{ url_for('data.imports') }}">{{ icon('chevron-left', 16) }} Import</a>
-  {{ page_head('Match Columns', filename ~ ' · ' ~ plural(row_count, 'row')) }}
+  {{ import_steps(2) }}
+  {{ page_head('Map Columns', filename ~ ' · ' ~ plural(row_count, 'row')) }}
 
   {% if errors %}
     <div class="form-error" role="alert">{% for error in errors %}<p>{{ error }}</p>{% endfor %}</div>
@@ -36,7 +37,7 @@
   <form method="post" class="section">
     {{ csrf() }}
     <div class="card">
-      <div class="card-head"><h2>Which Column Is Which?</h2><p>We guessed from the column names. Check them, then import.</p></div>
+      <div class="card-head"><h2>Which Column Is Which?</h2><p>We guessed from the column names. Check them, then review.</p></div>
       <div class="match-grid">
         {% for f in fields %}
           <label class="match-row{% if f.required %} is-required{% endif %}">
@@ -74,7 +75,7 @@
 
     <div class="form-actions section">
       <button class="button button-quiet" type="submit" form="cancel-form">Cancel</button>
-      <button class="button" type="submit">Import {{ plural(row_count, 'row') }}</button>
+      <button class="button" type="submit" name="action" value="review">Review {{ plural(row_count, 'row') }}</button>
     </div>
   </form>
   <form id="cancel-form" method="post" action="{{ url_for('data.cancel', token=token) }}">{{ csrf() }}</form>

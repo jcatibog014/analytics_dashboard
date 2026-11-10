@@ -14,9 +14,20 @@ from ..models import Import, Workspace
 bp = Blueprint("lab", __name__)
 
 
+def need_developer_mode():
+    """The Lab is a tool for developers: it shows only with Developer mode on (Settings)."""
+    if not g.user.developer_mode:
+        flash("The Performance Lab is a tool for developers. Switch on Developer mode to see it.")
+        return redirect(url_for("auth.settings"))
+    return None
+
+
 @bp.get("/lab")
 @login_required
 def index():
+    blocked = need_developer_mode()
+    if blocked:
+        return blocked
     s = db.session()
     sc = scope.current()
     has_sales = sc.bounds[0] is not None
@@ -37,6 +48,9 @@ def index():
 @bp.post("/lab/cache/clear")
 @login_required
 def clear_cache():
+    blocked = need_developer_mode()
+    if blocked:
+        return blocked
     cache.current().clear()
     flash("The cache is empty. The next pages work everything out again.")
     return redirect(url_for("lab.index"))

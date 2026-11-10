@@ -37,7 +37,7 @@ def import_csv(client, content=CSV, mode="skip", **mapping):
         chosen = re.search(r'<option value="([^"]*)" selected', options)
         if chosen:
             form[key] = chosen.group(1)
-    form.update(mode=mode, date_format="auto", **mapping)
+    form.update(mode=mode, date_format="auto", action="import", **mapping)
     return post(client, f"/import/{token}", form)
 
 
@@ -147,7 +147,7 @@ def test_import_a_csv(app, owner):
         assert (record.first_day, record.last_day) == (date(2026, 3, 1), date(2026, 3, 3))
         assert s.get(workspaces.Workspace, main_workspace_id(app)).data_version == 2
     page = owner.get(response.headers["Location"]).get_data(as_text=True)
-    assert "Orders added" in page and "Undo import" in page
+    assert "Orders added" in page and "Revert import" in page
 
 
 def test_the_same_file_twice_skips_or_replaces(app, owner):
@@ -224,7 +224,7 @@ def test_excel_files(app, owner):
     page = owner.get(f"/import/{token}").get_data(as_text=True)
     assert "X-1" in page
     post(owner, f"/import/{token}", {"order_no": "Order No", "order_date": "Date", "sku": "SKU",
-                                     "quantity": "Quantity", "unit_price": "Unit Price"})
+                                     "quantity": "Quantity", "unit_price": "Unit Price", "action": "import"})
     with app.app_context():
         orders = {o.order_no: o for o in db.session().scalars(select(Order))}
         assert orders["X-1"].order_hour == 10 and orders["X-1"].revenue == 78000
@@ -242,7 +242,7 @@ def test_column_matches_are_remembered(owner):
     content = "Ref,When,Thing,How Many,Each\nA,2026-01-01,X,1,5\n"
     token = upload(owner, content)
     post(owner, f"/import/{token}", {"order_no": "Ref", "order_date": "When", "product": "Thing",
-                                     "quantity": "How Many", "unit_price": "Each"})
+                                     "quantity": "How Many", "unit_price": "Each", "action": "import"})
     token = upload(owner, content.replace("A,", "B,"))
     page = owner.get(f"/import/{token}").get_data(as_text=True)
     assert "columns are matched the same way" in page
@@ -361,3 +361,48 @@ def test_an_import_shows_its_own_dates(app, owner):
         record = db.session().scalars(select(Import).order_by(Import.id.desc())).first()
         # Not March 1 (the returning customer's first day): only this file's own date.
         assert (record.first_day, record.last_day) == (date(2026, 4, 20), date(2026, 4, 20))
+
+
+def test_review_step_says_what_will_happen_before_saving(app, owner):
+    import_csv(owner)  # R-1, R-2, R-3 are now here
+    content = CSV + "R-4,2026-03-04,BN-1,House Beans,Coffee Beans,1,320,150,C-4,Ana Cruz,Davao,Store\n" \
+                    "R-5,yesterday,BN-1,House Beans,Coffee Beans,1,320,150,C-4,Ana Cruz,Davao,Store\n"
+    token = upload(owner, content)
+    page = owner.get(f"/import/{token}").get_data(as_text=True)
+    form = {}
+    for key, options in re.findall(r'<select name="(\w+)">(.*?)</select>', page, re.S):
+        chosen = re.search(r'<option value="([^"]*)" selected', options)
+        if chosen:
+            form[key] = chosen.group(1)
+    review = post(owner, f"/import/{token}", form)
+    html = review.get_data(as_text=True)
+    assert review.status_code == 200 and "Review the Import" in html and 'aria-current="step"' in html
+    assert ">1</strong>" in html and ">3</strong>" in html  # 1 new order, 3 already here
+    assert "yesterday" in html and "Import 1 order" in html
+    with app.app_context():
+        assert db.session().scalar(select(func.count()).select_from(Order)) == 3  # nothing saved yet
+    back = post(owner, f"/import/{token}", {**form, "action": "edit"}).get_data(as_text=True)
+    assert "Map Columns" in back and '<option value="Receipt #" selected>' in back
+    done = post(owner, f"/import/{token}", {**form, "action": "import"})
+    assert done.status_code == 302 and "done=1" in done.headers["Location"]
+    assert "Done" in owner.get(done.headers["Location"]).get_data(as_text=True)
+    with app.app_context():
+        assert db.session().scalar(select(func.count()).select_from(Order)) == 4
+
+
+def test_records_pages_go_both_ways_and_say_where_you_are(app, owner):
+    lines = ["Order,Date,SKU,Qty,Price"] + [f"O-{n:03d},2026-01-{1 + n % 28:02d},SKU-{n % 3},1,10"
+                                           for n in range(1, 121)]
+    import_csv(owner, "\n".join(lines) + "\n")
+    first = owner.get("/records").get_data(as_text=True)
+    assert "Showing <strong>1&ndash;50</strong> of <strong>120</strong> lines" in first
+    after = re.search(r'after=([\w-]+)', first).group(1)
+    second = owner.get(f"/records?after={after}").get_data(as_text=True)
+    assert "Showing <strong>51&ndash;100</strong>" in second
+    before = re.search(r'before=([\w-]+)', second).group(1)
+    back = owner.get(f"/records?before={before}").get_data(as_text=True)
+    assert "Showing <strong>1&ndash;50</strong>" in back
+    assert re.findall(r">(O-\d{3})<", back) == re.findall(r">(O-\d{3})<", first)  # the same page again
+    third = owner.get("/records?after=" + re.search(r'after=([\w-]+)', second).group(1)).get_data(as_text=True)
+    assert "Showing <strong>101&ndash;120</strong>" in third
+    assert 'aria-disabled="true">Older' in third

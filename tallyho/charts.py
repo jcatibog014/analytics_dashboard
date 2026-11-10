@@ -146,8 +146,8 @@ def line_charts(points, kind="money", compare=False, average=False, second=False
                                  max_labels=4, second=second)}
 
 
-def sparkline(values, width=100, height=28):
-    """A tiny line for a KPI tile: no axes, just the shape (and the last point)."""
+def sparkline(values, width=100, height=40):
+    """A small line for a KPI tile: no axes, just the shape, with a soft fill under it."""
     clean = [v for v in values if v is not None]
     if len(clean) < 2:
         return None
@@ -160,10 +160,14 @@ def sparkline(values, width=100, height=28):
             pen_down = False
             continue
         x = width * index / (count - 1)
-        y = 3 + (height - 6) * (1 - (value - low) / span)
+        y = 4 + (height - 8) * (1 - (value - low) / span)
         parts.append(f"{'L' if pen_down else 'M'}{x:.1f},{y:.1f}")
         pen_down, last = True, (x, y)
-    return {"d": " ".join(parts), "width": width, "height": height, "end": last}
+    # The fill: the line, then down to the bottom and back (only where there are no gaps).
+    area = None
+    if all(v is not None for v in values):
+        area = " ".join(parts) + f" L{width},{height} L0,{height} Z"
+    return {"d": " ".join(parts), "area": area, "width": width, "height": height, "end": last}
 
 
 def bars(rows, value_key="revenue", kind="money", label_key="name"):

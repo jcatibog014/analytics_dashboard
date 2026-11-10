@@ -91,8 +91,60 @@ function setUpDropZone() {
   });
 }
 
+// The sun/moon button at the top of the menu: light or dark in one click.
+// It saves the same choice as Settings (Device, Light or Dark), so both stay in step.
+function setUpThemeButton() {
+  const button = document.querySelector("[data-theme-button]");
+  if (!button) return;
+  const root = document.documentElement;
+  const isDark = () =>
+    root.dataset.theme === "dark" ||
+    (!root.dataset.theme && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const show = () => {
+    const dark = isDark();
+    button.classList.toggle("is-dark", dark);
+    const label = dark ? "Switch to light mode" : "Switch to dark mode";
+    button.title = label;
+    button.setAttribute("aria-label", label);
+  };
+  button.hidden = false;
+  show();
+  // The Settings choice changes it too.
+  document.addEventListener("change", (event) => {
+    if (event.target.name === "theme") show();
+  });
+  button.addEventListener("click", () => {
+    const next = isDark() ? "light" : "dark";
+    root.dataset.theme = next;
+    try {
+      localStorage.setItem("tallyho-theme", next);
+    } catch (error) {
+      // Storage can be blocked. The theme still changes for this page.
+    }
+    document.querySelectorAll('input[name="theme"]').forEach((choice) => {
+      choice.checked = choice.value === next;
+    });
+    show();
+  });
+}
+
+// Date boxes: a click anywhere in the box opens the calendar (not only the small icon).
+function setUpDatePickers() {
+  document.querySelectorAll('input[type="date"], input[type="month"]').forEach((input) => {
+    input.addEventListener("click", () => {
+      try {
+        input.showPicker();
+      } catch (error) {
+        // Older browsers: the calendar icon still works.
+      }
+    });
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   setUpTheme();
+  setUpThemeButton();
+  setUpDatePickers();
   setUpDropZone();
   setUpMenu();
   setUpPopovers();

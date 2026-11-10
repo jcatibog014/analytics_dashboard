@@ -7,7 +7,7 @@ from datetime import date, timedelta
 import click
 from flask import Blueprint, Response, abort, flash, g, redirect, render_template, request, url_for
 from flask.cli import with_appcontext
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 
 from .. import db, importer, sample, uploads, workspaces
 from ..auth import login_required
@@ -86,7 +86,9 @@ def match(token):
             date_format = "auto"
         mode = "replace" if request.form.get("mode") == "replace" else "skip"
         errors = importer.mapping_problems(mapping)
-        if not errors:
+        action = request.form.get("action", "review")
+        if not errors and action != "edit":
+            chosen_format = date_format
             if date_format == "auto":
                 position = headers.index(mapping["order_date"])
                 date_format, _note = importer.detect_date_format([r[position] for _n, r in rows[:500]
@@ -94,17 +96,23 @@ def match(token):
             result = importer.parse_file(headers, rows, mapping, date_format)
             if not result.orders:
                 errors.append("None of the rows could be imported. The first problems are below.")
-            else:
+            elif action == "import":
                 record = importer.run_import(s, g.workspace, g.user, filename, result, mode)
                 if saved is None:
                     saved = SavedMatch(workspace_id=g.workspace.id, headers_key=key)
                     s.add(saved)
                 saved.mapping = json.dumps(mapping)
-                saved.date_format = request.form.get("date_format", "auto")
+                saved.date_format = chosen_format
                 s.commit()
                 uploads.remove(token, g.workspace.id)
                 flash(f"Imported {record.orders_added:,} orders.")
-                return redirect(url_for("data.show_import", import_id=record.id))
+                return redirect(url_for("data.show_import", import_id=record.id, done=1))
+            else:
+                # Step 3: say what will happen before anything is saved.
+                return render_template("data/review.html", token=token, filename=filename, result=result,
+                                       summary=review_summary(s, result), mapping=mapping, mode=mode,
+                                       date_format=chosen_format, read_as=date_format,
+                                       fields=importer.FIELD_BY_KEY, date_formats=dict(importer.DATE_FORMATS))
     else:
         mapping = json.loads(saved.mapping) if saved else importer.auto_match(headers)
         mapping = {k: v for k, v in mapping.items() if v in headers}
@@ -122,6 +130,22 @@ def match(token):
                            problems=(result.problems[:20] if result else [])), 400 if errors else 200
 
 
+def review_summary(s, result):
+    """What an import would do: new orders, orders already here, the dates, a few examples."""
+    numbers = [order.order_no for order in result.orders]
+    existing = 0
+    for start in range(0, len(numbers), 1000):
+        chunk = numbers[start:start + 1000]
+        existing += s.scalar(select(func.count()).select_from(Order).where(
+            Order.workspace_id == g.workspace.id, Order.order_no.in_(chunk))) or 0
+    lines = sum(len(order.lines) for order in result.orders)
+    revenue = sum(line.revenue for order in result.orders for line in order.lines)
+    return {"orders": len(result.orders), "lines": lines, "existing": existing, "new": len(result.orders) - existing,
+            "first": result.orders[0].order_date, "last": result.orders[-1].order_date, "revenue": revenue,
+            "customers": len({o.customer_code for o in result.orders if o.customer_code}),
+            "examples": result.orders[:5]}
+
+
 @bp.post("/import/<token>/cancel")
 @login_required
 def cancel(token):
@@ -137,7 +161,7 @@ def load_sample():
     last = today()
     record = sample.load(s, g.workspace, g.user, last - timedelta(days=SAMPLE_DAYS - 1), last)
     s.commit()
-    flash(f"Loaded {record.orders_added:,} sample orders. Undo the import to take them away again.")
+    flash(f"Loaded {record.orders_added:,} sample orders. Revert the import to take them away again.")
     return redirect(url_for("data.show_import", import_id=record.id))
 
 
@@ -154,7 +178,7 @@ def show_import(import_id):
     record = workspaces.get_in_workspace(db.session(), Import, import_id, g.workspace)
     problems = importer.problems_of(record)
     return render_template("data/import.html", record=record, problems=problems[:50],
-                           more_problems=max(0, record.rows_failed - 50))
+                           more_problems=max(0, record.rows_failed - 50), just_done=request.args.get("done") == "1")
 
 
 @bp.get("/imports/<int:import_id>/problems.csv")
@@ -184,11 +208,11 @@ def undo(import_id):
     s = db.session()
     record = workspaces.get_in_workspace(s, Import, import_id, g.workspace)
     if record.status != "done":
-        abort(409, "That import was already undone.")
+        abort(409, "That import was already reverted.")
     removed = record.orders_added
     importer.undo_import(s, g.workspace, record)
     s.commit()
-    flash(f"Undone: {removed:,} orders from {record.filename} were removed.")
+    flash(f"Reverted: {removed:,} orders from {record.filename} were deleted.")
     return redirect(url_for("data.imports"))
 
 
@@ -207,19 +231,46 @@ def _parse_day(value):
         return None
 
 
+# Where one line sits in the list (newest first): its day, its order's id, its line number.
+OLDER = ("o.order_date <= :c_day AND (o.order_date < :c_day OR (o.order_date = :c_day AND o.id < :c_order)"
+         " OR (o.order_date = :c_day AND o.id = :c_order AND l.line_no > :c_line))")
+NEWER = ("o.order_date >= :c_day AND (o.order_date > :c_day OR (o.order_date = :c_day AND o.id > :c_order)"
+         " OR (o.order_date = :c_day AND o.id = :c_order AND l.line_no < :c_line))")
+NEWEST_FIRST = "o.order_date DESC, o.id DESC, l.line_no"
+OLDEST_FIRST = "o.order_date, o.id, l.line_no DESC"
+RECORD_TABLES = """order_lines l
+        JOIN orders o ON o.id = l.order_id
+        JOIN products p ON p.id = l.product_id
+        LEFT JOIN customers c ON c.id = o.customer_id"""
+
+
+def _cursor(value):
+    """ "2026-03-05_812_2" -> {c_day, c_order, c_line}, or None."""
+    try:
+        day, order_id, line = value.split("_")
+        return {"c_day": date.fromisoformat(day), "c_order": int(order_id), "c_line": int(line)}
+    except ValueError:
+        return None
+
+
+def _cursor_of(row):
+    return f"{as_date(row['order_date']).isoformat()}_{row['order_id']}_{row['line_no']}"
+
+
 @bp.get("/records")
 @login_required
 def records():
     """Every line, newest first, 50 at a time.
 
-    Paging uses a "keyset" (the last row's date, order and line), not OFFSET.
-    OFFSET 100000 makes the database read and throw away 100,000 rows; a keyset
-    jumps straight to the right place with the index. The Performance Lab times both.
+    Paging uses a "keyset" (where the page starts: a line's date, order and line
+    number), not OFFSET. OFFSET 100000 makes the database read and throw away
+    100,000 rows; a keyset jumps straight to the right place with the index. It
+    works both ways: Older continues after the page's last line, Newer goes back
+    before its first. The Performance Lab times OFFSET and keyset side by side.
     """
     s = db.session()
     q = " ".join(request.args.get("q", "").split())[:80]
     first, last = _parse_day(request.args.get("from")), _parse_day(request.args.get("to"))
-    after = request.args.get("after", "")
     where = ["o.workspace_id = :ws"]
     params = {"ws": g.workspace.id, "limit": RECORDS_PER_PAGE + 1}
     if q:
@@ -232,40 +283,48 @@ def records():
     if last:
         where.append("o.order_date <= :last")
         params["last"] = last
-    try:
-        cursor_day, cursor_order, cursor_line = after.split("_")
-        params.update(c_day=date.fromisoformat(cursor_day), c_order=int(cursor_order), c_line=int(cursor_line))
-        # The first part says nothing new, but it is simple enough for the index to start
-        # right at the cursor; the OR part then finds the exact place.
-        where.append("o.order_date <= :c_day AND (o.order_date < :c_day OR (o.order_date = :c_day AND o.id < :c_order)"
-                     " OR (o.order_date = :c_day AND o.id = :c_order AND l.line_no > :c_line))")
-    except ValueError:
-        after = ""
-    sql = f"""
+    filters = list(where)
+    after, before = _cursor(request.args.get("after", "")), _cursor(request.args.get("before", ""))
+    going_back = before is not None and after is None
+    if after:
+        where.append(OLDER)
+        params.update(after)
+    elif before:
+        where.append(NEWER)
+        params.update(before)
+    query = f"""
         SELECT o.id AS order_id, o.order_no, o.order_date, o.order_hour, l.line_no, p.sku, p.name AS product,
                l.quantity, l.unit_price, l.discount, l.revenue, c.name AS customer, r.name AS region,
                ch.name AS channel
-        FROM order_lines l
-        JOIN orders o ON o.id = l.order_id
-        JOIN products p ON p.id = l.product_id
-        LEFT JOIN customers c ON c.id = o.customer_id
+        FROM {RECORD_TABLES}
         JOIN regions r ON r.id = o.region_id
         JOIN channels ch ON ch.id = o.channel_id
         WHERE {' AND '.join(where)}
-        ORDER BY o.order_date DESC, o.id DESC, l.line_no
+        ORDER BY {OLDEST_FIRST if going_back else NEWEST_FIRST}
         LIMIT :limit
     """
-    rows = s.execute(text(sql), params).mappings().all()
+    rows = s.execute(text(query), params).mappings().all()
     more = len(rows) > RECORDS_PER_PAGE
     rows = rows[:RECORDS_PER_PAGE]
-    next_after = None
-    if more:
-        tail = rows[-1]
-        next_after = f"{as_date(tail['order_date']).isoformat()}_{tail['order_id']}_{tail['line_no']}"
+    if going_back:
+        rows = list(reversed(rows))  # asked oldest first, to find the page just before; shown newest first
+    count_params = {k: v for k, v in params.items() if not k.startswith("c_") and k != "limit"}
+    total = s.execute(text(f"SELECT COUNT(*) FROM {RECORD_TABLES} WHERE {' AND '.join(filters)}"),
+                      count_params).scalar() or 0
+    start = 0
+    if rows:
+        # How many lines come before this page: the position, without OFFSET's cost of reading them.
+        start = s.execute(text(f"SELECT COUNT(*) FROM {RECORD_TABLES} WHERE {' AND '.join(filters + [NEWER])}"),
+                          {**count_params, **_cursor(_cursor_of(rows[0]))}).scalar() or 0
+    has_newer = start > 0
+    # Going back from an older page, there is always that older page; going forward, only if more came.
+    has_older = bool(rows) and (going_back or more)
     totals = s.execute(text("SELECT COUNT(*) AS orders, COALESCE(SUM(line_count), 0) AS lines FROM orders "
                             "WHERE workspace_id = :ws"), {"ws": g.workspace.id}).mappings().one()
-    return render_template("data/records.html", rows=rows, q=q, first=first, last=last, after=after,
-                           next_after=next_after, totals=totals, as_date=as_date)
+    return render_template(
+        "data/records.html", rows=rows, q=q, first=first, last=last, totals=totals, as_date=as_date,
+        total=total, start=start, older=_cursor_of(rows[-1]) if rows and has_older else None,
+        newer=_cursor_of(rows[0]) if rows and has_newer else None, filtered=bool(q or first or last))
 
 
 def as_date(value):

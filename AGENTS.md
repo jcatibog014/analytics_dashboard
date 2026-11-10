@@ -41,13 +41,15 @@ test drops and makes the tables again.
 - `charts.py` makes chart geometry; `templates/_charts.html` draws it as SVG; `static/charts.js` adds
   the hover layer. Colours were checked with the dataviz validator (light and dark).
 - `reports.py` (pivot with totals via UNION ALL, cohorts, 80/20), `goals.py` (pace, forecast, alerts),
-  `lab.py` + `views/lab.py` (Performance Lab, `flask benchmark`), `tick.py` (POST /tasks/tick, hourly
+  `lab.py` + `views/lab.py` (Performance Lab, only with Developer mode on in Settings; `flask benchmark`), `tick.py` (POST /tasks/tick, hourly
   from `.github/workflows/tick.yml`: weekly email, alerts, demo clean-up), `demo.py` (Try Demo copies a
   hidden template workspace with INSERT ... SELECT, dates moved by whole weeks).
 - Templates: `base.html`, `_sidebar.html` (a link appears only when its endpoint exists: `has_page`),
   `_macros.html`, `_icons.html` (inline SVG icons; the logo is `static/icons/logo.svg`, and
   `docs/make_icons.py` draws every app icon from it). `static/style.css` holds the
-  "Clean analyst" tokens for light and dark (two dark blocks: device setting and Settings choice — change both).
+  "Clean analyst" tokens in the logo's colours (blue actions, gold highlights) for light and dark (two dark
+  blocks: device setting, and the Settings choice or sun/moon button — change both). Chart colours were
+  checked with the dataviz validator; keep the legend and table view on every chart.
 
 ## Rules
 

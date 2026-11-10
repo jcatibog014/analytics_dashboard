@@ -13,22 +13,23 @@ It is a learning project. The skills are **SQL aggregation**, **performance** an
 **Import your sales**
 
 - Upload a **CSV** or **Excel** file. One row is one line of an order.
-- Tally Ho! **guesses which column is which** from the names ("Receipt #" is the order number, "Sold On" is the date). You check it and press Import. The next file with the same columns is matched by itself.
+- Four clear steps: **Upload**, **Map columns**, **Review**, **Done**. Tally Ho! **guesses which column is which** from the names ("Receipt #" is the order number, "Sold On" is the date). You check it, then **Review** shows how many orders are new, how many are already here, the problem rows and the first orders, before anything is saved. The next file with the same columns is mapped by itself.
 - Dates can be written many ways (2026-03-25, 03/25/2026, 25/03/2026, with or without a time).
 - Every row is checked. A row with a problem leaves its whole order out and says why. You can **download the problem rows**, fix them and import again.
 - Orders that are already here are **skipped** (or **replaced**, if you choose). Importing the same file twice is safe.
-- **Undo** an import: its orders go away again.
+- **Revert** an import: its orders are deleted again (it asks first).
 - No file yet? Download a **sample CSV**, or load **18 months of sample sales**.
-- **Records** shows every line, newest first, with a search.
+- **Records** shows every line, newest first, with a search and dates (click a date box for a calendar). Pages of 50 say where you are ("Showing 51–100 of 18,546") and go Newer or Older.
 
 **See your numbers**
 
 - The **Dashboard** shows ten KPIs for the dates you pick: revenue, orders, average order, gross profit and margin, units, customers, new customers, returning customers and the discount rate. Each one says how it changed, in green or red (and with an arrow), and has a small line of its trend.
+- **Light or dark**: the sun/moon button at the top of the menu, or Device/Light/Dark in Settings.
 - Pick the dates: today, 7, 30 or 90 days, this month, last month, this quarter, the year so far, 12 months, all time, or your own dates.
 - **Compare** with the period before, or with the same dates last year.
 - A **chart** of revenue, orders, profit, average order or customers, by day, week or month, with a **7-day average** and the earlier period behind it. Move the mouse (or the arrow keys) to read every day.
 - Sales by **category**, **region** and **channel**, and the **top products**.
-- **Filter** everything by region, channel or category. Every chart has **Show as table**.
+- **Filter** everything by region, channel or category. Every chart has **View as table**.
 
 **Look closer**
 
@@ -47,7 +48,7 @@ It is a learning project. The skills are **SQL aggregation**, **performance** an
 - Set a **goal** for a month (revenue, orders or profit, for everything or one region). See how much is done, how much is **expected by today**, and a **forecast** for the month. Both follow your usual week, so a slow Monday is no worry.
 - **Alerts** tell you when a day was far from the usual for that weekday ("revenue 25% below the usual Monday"). They are checked after every import and every hour.
 
-**Performance Lab**
+**Performance Lab** (switch on **Developer mode** in Settings)
 
 - Every page says how many SQL queries it ran and how long they took.
 - The **Performance Lab** asks the same questions in different ways and times them on your own data: from the raw sales or from the daily **rollups**, **with or without an index** (with the database's own plan), and deep pages with **OFFSET** or a **keyset**.
@@ -90,16 +91,18 @@ On a million order lines ([docs/BENCHMARKS.md](docs/BENCHMARKS.md), SQLite on a 
 | Goals | ![Goals with pace, forecast and the month's chart](docs/screenshots/goals.png) |
 | Alerts | ![Days far from the usual, and the rules](docs/screenshots/alerts.png) |
 | Import | ![Upload a file, and the import history](docs/screenshots/import.png) |
-| Match columns | ![The file's first rows, and which column is which](docs/screenshots/match-columns.png) |
+| Map columns | ![The file's first rows, and which column is which](docs/screenshots/match-columns.png) |
+| Review before importing | ![New orders, orders already here, problem rows and the first orders](docs/screenshots/import-review.png) |
 | An import with problem rows | ![What was added, and the rows that were left out](docs/screenshots/import-problems.png) |
 | Records | ![Every line, newest first](docs/screenshots/records.png) |
 | One order | ![An order and its lines](docs/screenshots/order.png) |
+| Settings | ![Appearance, profile, weekly email, developer mode, password](docs/screenshots/settings.png) |
+| Developer mode on | ![The Developer mode switch, on](docs/screenshots/settings-developer.png) |
 | Performance Lab | ![Raw vs rollups, the index, paging, the cache](docs/screenshots/lab.png) |
-| Settings | ![Theme, business name, weekly email, password](docs/screenshots/settings.png) |
 
 ## Try the Demo
 
-Press **Try the demo** on the login page. You get your own copy of **Kape Corner**, a made-up coffee business with 15 months of sales, for 2 hours. Nobody else sees it. Import a file, undo it, set goals, save reports: it is all yours. All names in it are made up.
+Press **Try the demo** on the login page. You get your own copy of **Kape Corner**, a made-up coffee business with 15 months of sales, for 2 hours. Nobody else sees it. Import a file, revert it, set goals, save reports: it is all yours. Switch on Developer mode in Settings to see the Performance Lab. All names in it are made up.
 
 ## Put It on Your Phone
 

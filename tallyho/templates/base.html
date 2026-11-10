@@ -27,7 +27,7 @@
       {% block notes %}
       {% if g.user and g.user.is_demo %}
         <div class="demo-bar">
-          <p><strong>Demo</strong> Sample sales for a made-up shop, just for you. Import, undo and save anything; it is deleted after 2 hours.</p>
+          <p><strong>Demo</strong> Sample sales for a made-up shop, just for you. Import files, set goals, save reports: it is all deleted after 2 hours.</p>
         </div>
       {% endif %}
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -39,7 +39,7 @@
       {% endwith %}
       {% endblock %}
       {% block content %}{% endblock %}
-      {% block footer %}{% if g.user %}{% include "_footer.html" ignore missing %}{% endif %}{% endblock %}
+      {% block footer %}{% if g.user and g.user.developer_mode %}{% include "_footer.html" ignore missing %}{% endif %}{% endblock %}
     </main>
   </div>
 </body>

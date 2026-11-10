@@ -50,9 +50,11 @@ PAGES = [
     ("alerts.png", "/alerts", "light", DESKTOP, ""),
     ("import.png", "/import", "light", DESKTOP, ""),
     ("match-columns.png", "{upload}", "light", DESKTOP, "full"),
+    ("import-review.png", "{review}", "light", DESKTOP, "full"),
     ("import-problems.png", "{problem-import}", "light", DESKTOP, ""),
     ("records.png", "/records", "light", DESKTOP, ""),
     ("order.png", "/orders/WEB-9001", "light", DESKTOP, ""),
+    ("settings-developer.png", "/settings", "light", DESKTOP, "developer-on"),
     ("lab.png", "/lab?range=90d", "light", DESKTOP, "full"),
     ("settings.png", "/settings", "light", DESKTOP, ""),
     ("phone-menu.png", "/", "light", PHONE, "open-menu"),
@@ -87,10 +89,15 @@ def address(page, wanted):
         sample = OUT / "november-sales.csv"
         sample.write_text(SAMPLE, encoding="utf-8")
         page.set_input_files("input[type=file]", str(sample))
-        page.get_by_role("button", name="Upload and match columns").click()
+        page.get_by_role("button", name="Upload & map columns").click()
         page.wait_for_load_state("networkidle")
         sample.unlink()
         return page.url.replace(BASE, "")
+    if key == "review":
+        # Still on the Map Columns page from the picture before: press Review.
+        page.get_by_role("button", name=re.compile("^Review")).click()
+        page.wait_for_load_state("networkidle")
+        return None
     raise ValueError(wanted)
 
 
@@ -114,8 +121,13 @@ def main():
                 continue
             target = address(page, wanted)
             page.emulate_media(color_scheme=theme)
-            page.goto(BASE + target if target.startswith("/") else target)
-            page.wait_for_load_state("networkidle")
+            if target is not None:  # None: the page is already open (the import's Review step)
+                page.goto(BASE + target if target.startswith("/") else target)
+                page.wait_for_load_state("networkidle")
+            if action == "developer-on":
+                # Switch on Developer mode (it saves by itself), so the Performance Lab shows.
+                page.locator(".switch", has_text="Performance Lab").click()
+                page.wait_for_load_state("networkidle")
             if action == "hover-chart":
                 box = page.locator(".only-wide .chart-svg").first.bounding_box()
                 page.mouse.move(box["x"] + box["width"] * 0.72, box["y"] + box["height"] * 0.45)

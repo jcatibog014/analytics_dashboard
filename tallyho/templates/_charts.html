@@ -1,5 +1,5 @@
 {# Charts drawn as SVG from charts.py's geometry. static/charts.js adds the hover layer:
-   every value it shows is also in the "Show as table" view below each chart. #}
+   every value it shows is also in the "View as table" view below each chart. #}
 
 {# A line chart. series: [(key, name)] in drawing order, e.g. [('main','Revenue'), ('avg','7-day average')]. #}
 {% macro line(charts, series, summary, note=none) %}
@@ -46,11 +46,17 @@
   {% if note %}<p class="chart-note">{{ note }}</p>{% endif %}
 {% endmacro %}
 
-{# A sparkline for a KPI tile. #}
-{% macro spark(line) %}
+{# A sparkline for a KPI tile: the line, with a gradient fading down under it. key makes the gradient's id unique. #}
+{% macro spark(line, key='spark') %}
   {% if line %}
     <svg class="spark" viewBox="0 0 {{ line.width }} {{ line.height }}" preserveAspectRatio="none" aria-hidden="true">
-      <path d="{{ line.d }}" vector-effect="non-scaling-stroke"></path>
+      <defs>
+        <linearGradient id="fade-{{ key }}" x1="0" y1="0" x2="0" y2="1">
+          <stop class="spark-stop-top" offset="0"></stop><stop class="spark-stop-bottom" offset="1"></stop>
+        </linearGradient>
+      </defs>
+      {% if line.area %}<path class="spark-area" d="{{ line.area }}" fill="url(#fade-{{ key }})"></path>{% endif %}
+      <path class="spark-line" d="{{ line.d }}" vector-effect="non-scaling-stroke"></path>
     </svg>
   {% endif %}
 {% endmacro %}
@@ -75,7 +81,7 @@
 {% endmacro %}
 
 {# The same numbers as a table, folded away (works without JavaScript). #}
-{% macro table_view(headers, rows, label='Show as table') %}
+{% macro table_view(headers, rows, label='View as table') %}
   <details class="table-view">
     <summary>{{ label }}</summary>
     <div class="table-wrap">

@@ -46,12 +46,16 @@
         </tbody>
       </table>
     </div>
+    {% set keep = {'q': q or none, 'from': first|iso if first else none, 'to': last|iso if last else none} %}
     <nav class="pager" aria-label="Pages">
-      <a class="button button-quiet button-small" href="{{ url_for('data.records', q=q or none, **{'from': first|iso if first else none, 'to': last|iso if last else none}) }}"{% if not after %} aria-disabled="true"{% endif %}>{{ icon('chevron-left', 16) }} Newest</a>
-      <span class="muted small">{{ rows|length }} lines on this page</span>
-      <a class="button button-quiet button-small" href="{{ url_for('data.records', q=q or none, after=next_after, **{'from': first|iso if first else none, 'to': last|iso if last else none}) }}"{% if not next_after %} aria-disabled="true"{% endif %}>Older {{ icon('chevron-right', 16) }}</a>
+      <p class="pager-count">Showing <strong>{{ (start + 1)|number }}&ndash;{{ (start + rows|length)|number }}</strong> of <strong>{{ total|number }}</strong> lines</p>
+      <div class="pager-buttons">
+        <a class="button button-quiet button-small" href="{{ url_for('data.records', **keep) }}"{% if not newer %} aria-disabled="true"{% endif %}>Newest</a>
+        <a class="button button-quiet button-small" href="{{ url_for('data.records', before=newer, **keep) }}"{% if not newer %} aria-disabled="true"{% endif %}>{{ icon('chevron-left', 16) }} Newer</a>
+        <a class="button button-quiet button-small" href="{{ url_for('data.records', after=older, **keep) }}"{% if not older %} aria-disabled="true"{% endif %}>Older {{ icon('chevron-right', 16) }}</a>
+      </div>
     </nav>
-  {% elif q or first or last %}
+  {% elif filtered %}
     {% call empty('Nothing found', 'No lines match that search.', 'search') %}{% endcall %}
   {% else %}
     {% call empty('No records yet', 'Import a file and every line of every order shows up here.', 'records') %}

@@ -1,17 +1,18 @@
 {% extends "base.html" %}
 {% from "_macros.html" import csrf, page_head %}
 {% from "_icons.html" import icon %}
+{% from "_steps.html" import import_steps %}
 {% block title %}{{ record.filename }} - {{ APP_NAME }}{% endblock %}
 {% block content %}
-  <a class="back-link" href="{{ url_for('data.imports') }}">{{ icon('chevron-left', 16) }} Import</a>
+  {% if just_done %}{{ import_steps(4) }}{% else %}<a class="back-link" href="{{ url_for('data.imports') }}">{{ icon('chevron-left', 16) }} Import</a>{% endif %}
   {% call page_head(record.filename, 'Imported ' ~ (record.created_at|nice_datetime) ~ (' by ' ~ record.user.name if record.user else '')) %}
     {% if record.status == 'done' %}
-      <form method="post" action="{{ url_for('data.undo', import_id=record.id) }}" data-confirm="Remove the {{ record.orders_added|number }} orders this import added?">
+      <form method="post" action="{{ url_for('data.undo', import_id=record.id) }}" data-confirm="Revert this import? Its {{ record.orders_added|number }} orders will be deleted, and this can't be undone.">
         {{ csrf() }}
-        <button class="button button-quiet" type="submit">{{ icon('undo', 16) }} Undo import</button>
+        <button class="button button-danger" type="submit">{{ icon('undo', 16) }} Revert import</button>
       </form>
     {% else %}
-      <span class="pill">Undone {{ record.undone_at|ago }}</span>
+      <span class="pill">Reverted {{ record.undone_at|ago }}</span>
     {% endif %}
   {% endcall %}
 

@@ -13,6 +13,17 @@ from .conftest import post
 
 
 @pytest.fixture
+def owner(app, owner):
+    """The owner, with Developer mode on (the Lab and the timings show only then)."""
+    from tallyho.models import User
+    from .conftest import owner_id
+    with app.app_context():
+        db.session().get(User, owner_id(app)).developer_mode = True
+        db.session().commit()
+    return owner
+
+
+@pytest.fixture
 def stocked(app):
     with app.app_context():
         s = db.session()
@@ -83,3 +94,15 @@ def test_a_workspace_with_sales_can_be_deleted_whole(stocked):
         s.commit()
         for table in ("orders", "order_lines", "products", "regions", "daily_order_stats", "imports"):
             assert s.execute(text(f"SELECT COUNT(*) FROM {table}")).scalar() == 0, table
+
+
+def test_without_developer_mode_the_lab_and_timings_hide(app, client):
+    from .conftest import log_in_as, owner_id
+    plain = log_in_as(client, owner_id(app))
+    page = plain.get("/").get_data(as_text=True)
+    assert "ms in the database" not in page and "Performance Lab" not in page
+    response = plain.get("/lab")
+    assert response.status_code == 302 and response.headers["Location"].endswith("/settings")
+    post(plain, "/settings", {"action": "developer", "developer_mode": "1"})
+    assert plain.get("/lab").status_code == 200
+    assert "Performance Lab" in plain.get("/").get_data(as_text=True)

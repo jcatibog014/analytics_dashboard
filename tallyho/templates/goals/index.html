@@ -61,7 +61,7 @@
       <label class="field"><span class="field-label">Target <span class="hint">pesos, or a number of orders</span></span><input type="text" inputmode="decimal" name="target" value="{{ form.target }}" placeholder="250,000" required></label>
       <label class="field"><span class="field-label">Region</span>
         <select name="region"><option value="">Everywhere</option>{% for id_, name in regions %}<option value="{{ id_ }}"{% if form.region == id_|string %} selected{% endif %}>{{ name }}</option>{% endfor %}</select></label>
-      <div class="form-actions"><button class="button" type="submit">Save goal</button></div>
+      <div class="form-actions"><button class="button" type="submit">Create goal</button></div>
     </form>
   </section>
 

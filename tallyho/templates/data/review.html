@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, page_head %}
+{% from "_steps.html" import import_steps %}
+{% from "_icons.html" import icon %}
+{% block title %}Review the Import - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  {{ import_steps(3) }}
+  {{ page_head('Review the Import', filename ~ ' · nothing is saved until you press Import') }}
+
+  <div class="stat-row">
+    <div class="stat"><span>New orders</span><strong>{{ summary.new|number }}</strong><small>{{ plural(summary.lines, 'line') }} in the file</small></div>
+    <div class="stat"><span>Already here</span><strong>{{ summary.existing|number }}</strong>
+      <small>{% if mode == 'replace' %}will be replaced with the file's{% else %}will be skipped{% endif %}</small></div>
+    <div class="stat"><span>Rows with problems</span><strong>{{ result.problems|length|number }}</strong>
+      <small>{% if result.orders_left_out %}{{ plural(result.orders_left_out, 'order') }} left out{% else %}none left out{% endif %}</small></div>
+    <div class="stat"><span>Sales dates</span><strong class="stat-text">{{ date_range(summary.first, summary.last) }}</strong>
+      <small>read as {{ date_formats[read_as].split(' (')[0]|lower }}</small></div>
+    <div class="stat"><span>Revenue in the file</span><strong>{{ summary.revenue|money }}</strong><small>{{ plural(summary.customers, 'customer') }}</small></div>
+  </div>
+
+  {% if result.no_cost %}
+    <p class="flash flash-warn">{{ icon('warning', 16) }} The file has no unit cost, so these sales will count as costing nothing: their profit will equal their revenue.</p>
+  {% endif %}
+
+  {% if result.problems %}
+    <section class="section">
+      <div class="section-head"><h2>Rows With Problems</h2><p>These will be left out. You can download them after the import, fix them and import again.</p></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="num">Row</th><th>Problem</th></tr></thead>
+          <tbody>{% for p in result.problems[:20] %}<tr><td class="num">{{ p.row }}</td><td>{{ p.problem }}</td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+      {% if result.problems|length > 20 %}<p class="card-note">And {{ plural(result.problems|length - 20, 'more row') }}.</p>{% endif %}
+    </section>
+  {% endif %}
+
+  <section class="section">
+    <div class="section-head"><h2>The First Orders, as Read</h2><p>Check the dates, amounts and names look right.</p></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Region</th><th>Channel</th><th class="num">Lines</th><th class="num">Revenue</th></tr></thead>
+        <tbody>
+        {% for order in summary.examples %}
+          <tr>
+            <td class="main-cell">{{ order.order_no }}</td>
+            <td class="nowrap">{{ order.order_date|nice_date }}{% if order.hour is not none %} <span class="muted small">{{ '%02d'|format(order.hour) }}:00</span>{% endif %}</td>
+            <td>{{ order.customer_name or '—' }}</td>
+            <td>{{ order.region }}</td>
+            <td>{{ order.channel }}</td>
+            <td class="num">{{ order.lines|length }}</td>
+            <td class="num">{{ (order.lines|sum(attribute='revenue'))|money_cents }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <form method="post" action="{{ url_for('data.match', token=token) }}" class="form-actions section">
+    {{ csrf() }}
+    {% for key, column in mapping.items() %}<input type="hidden" name="{{ key }}" value="{{ column }}">{% endfor %}
+    <input type="hidden" name="date_format" value="{{ date_format }}">
+    <input type="hidden" name="mode" value="{{ mode }}">
+    <button class="button button-quiet spacer-right" type="submit" name="action" value="edit">{{ icon('chevron-left', 16) }} Back to columns</button>
+    <button class="button" type="submit" name="action" value="import">Import {{ plural(summary.new, 'order') }}</button>
+  </form>
+{% endblock %}
