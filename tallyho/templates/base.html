@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ APP_NAME }}{% endblock %}</title>
+  <meta name="description" content="Tally Ho! Import your sales and see KPIs, trends and reports over any date range.">
+  <link rel="preload" href="{{ url_for('static', filename='fonts/inter-variable.woff2') }}" as="font" type="font/woff2" crossorigin>
+  {# The app icon (docs/make_icons.py): browser tabs, iPhone home screens, and Android through the manifest. #}
+  <link rel="icon" href="{{ url_for('static', filename='icons/favicon.ico') }}" sizes="16x16 32x32 48x48">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/icon-32.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}">
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {# Before the page draws, so a saved dark theme never flashes white. #}
+  <script src="{{ url_for('static', filename='theme.js') }}"></script>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="{% block layout_class %}app{% endblock %}">
+    {% block sidebar %}{% if g.user %}{% include "_sidebar.html" %}{% endif %}{% endblock %}
+    <main id="main" class="page {% block page_class %}{% endblock %}">
+      {% block notes %}
+      {% if g.user and g.user.is_demo %}
+        <div class="demo-bar">
+          <p><strong>Demo</strong> Sample sales for a made-up shop, just for you. Import, undo and save anything; it is deleted after 2 hours.</p>
+        </div>
+      {% endif %}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flashes" role="status">
+            {% for category, message in messages %}<p class="flash{% if category == 'error' %} flash-error{% endif %}">{{ message }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      {% endblock %}
+      {% block content %}{% endblock %}
+      {% block footer %}{% if g.user %}{% include "_footer.html" ignore missing %}{% endif %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

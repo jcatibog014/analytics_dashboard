@@ -1,0 +1,51 @@
+{# Small building blocks used by many pages. #}
+
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro field(name, label, value='', error=None, type='text', hint=None, attrs='') %}
+  <label class="field{% if error %} has-error{% endif %}">
+    <span class="field-label">{{ label }}{% if hint %} <span class="hint">{{ hint }}</span>{% endif %}</span>
+    <input type="{{ type }}" name="{{ name }}" value="{{ value if value is not none else '' }}" {{ attrs|safe }}
+           {% if error %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}>
+    {% if error %}<p class="field-error" id="{{ name }}-error">{{ error }}</p>{% endif %}
+  </label>
+{% endmacro %}
+
+{% macro select(name, label, choices, value=None, error=None, hint=None, attrs='') %}
+  {# choices: a list of (value, text) pairs #}
+  <label class="field{% if error %} has-error{% endif %}">
+    <span class="field-label">{{ label }}{% if hint %} <span class="hint">{{ hint }}</span>{% endif %}</span>
+    <select name="{{ name }}" {{ attrs|safe }}>
+      {% for choice, text in choices %}
+        <option value="{{ choice }}"{% if choice|string == value|string %} selected{% endif %}>{{ text }}</option>
+      {% endfor %}
+    </select>
+    {% if error %}<p class="field-error">{{ error }}</p>{% endif %}
+  </label>
+{% endmacro %}
+
+{# A coloured letter for a person or a customer. The colour comes from the id. #}
+{% macro avatar(user, size='') %}
+  <span class="avatar tone-{{ user.id % 6 }}{% if size %} avatar-{{ size }}{% endif %}" title="{{ user.name }}">{{ user.initial }}</span>
+{% endmacro %}
+
+{# The page title row: title (and a lead line) on the left, actions on the right. #}
+{% macro page_head(title, lead=None) %}
+  <div class="page-head">
+    <div>
+      <h1>{{ title }}</h1>
+      {% if lead %}<p class="lead">{{ lead }}</p>{% endif %}
+    </div>
+    {% if caller %}<div class="head-actions">{{ caller() }}</div>{% endif %}
+  </div>
+{% endmacro %}
+
+{% macro empty(title, text=None, icon_name='empty') %}
+  {% from "_icons.html" import icon %}
+  <div class="empty-state">
+    {{ icon(icon_name, 40) }}
+    <h2>{{ title }}</h2>
+    {% if text %}<p>{{ text }}</p>{% endif %}
+    {% if caller %}<div class="empty-actions">{{ caller() }}</div>{% endif %}
+  </div>
+{% endmacro %}

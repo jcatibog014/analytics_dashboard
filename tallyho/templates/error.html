@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Error {{ code }} - {{ APP_NAME }}{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+  <div class="empty-state">
+    {{ icon('empty', 48) }}
+    <p class="kicker">Error {{ code }}</p>
+    <h1>{{ message }}</h1>
+    <p><a href="{{ url_for('main.home') }}">Go to the dashboard</a></p>
+  </div>
+{% endblock %}

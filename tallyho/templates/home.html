@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_head, empty %}
+{% block title %}Dashboard - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  {{ page_head('Dashboard', 'Hello, ' ~ g.user.first_name ~ '.') }}
+  {% call empty('No sales yet', 'Import a CSV or Excel file of your orders, and your numbers show up here.', 'import') %}{% endcall %}
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field %}
+{% from "_icons.html" import logo %}
+{% block title %}Log In - {{ APP_NAME }}{% endblock %}
+{% block body_class %}welcome-layout{% endblock %}
+{% block layout_class %}{% endblock %}
+{% block sidebar %}{% endblock %}
+{% block notes %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+  <div class="welcome">
+    <section class="welcome-panel">
+      <a class="logo" href="{{ url_for('auth.login') }}">{{ logo(60) }} <span>{{ APP_NAME }}</span></a>
+      <p class="welcome-line">{{ TAGLINE }}</p>
+      <p class="welcome-note">Import your sales, then see revenue, orders, customers and trends for any dates you pick.</p>
+    </section>
+    <section class="welcome-cards">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}<p class="flash welcome-flash{% if category == 'error' %} flash-error{% endif %}">{{ message }}</p>{% endfor %}
+      {% endwith %}
+      <div class="card">
+        <h1>Log In</h1>
+        {% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
+        <form method="post" action="{{ url_for('auth.login') }}" class="stack">
+          {{ csrf() }}
+          <input type="hidden" name="next" value="{{ next }}">
+          {{ field('email', 'Email', email, type='email', attrs='autocomplete="email" required autofocus') }}
+          {{ field('password', 'Password', type='password', attrs='autocomplete="current-password" required') }}
+          <button class="button" type="submit">Log in</button>
+        </form>
+        {% if has_page('demo.start') %}
+          <div class="or-line"><span>or</span></div>
+          <form method="post" action="{{ url_for('demo.start') }}">
+            {{ csrf() }}
+            <button class="button button-quiet" type="submit">Try the demo</button>
+          </form>
+          <p class="card-note">The demo opens a sample shop with 18 months of sales. Nothing to sign up for.</p>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+{% endblock %}
