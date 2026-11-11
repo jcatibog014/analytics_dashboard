@@ -1,4 +1,5 @@
-{# One row above the charts: the dates first, then the comparison, then the filters.
+{# One row above the charts: the dates first, then the comparison, then the filters (on a phone,
+   behind a Filters button).
    It scopes everything below it. keep: other address parts to carry along (measure...).
    Without JavaScript the Apply button sends it; with it, each menu applies itself. #}
 {% from "_icons.html" import icon %}
@@ -18,25 +19,36 @@
       <span class="muted" aria-hidden="true">to</span>
       <label><span class="visually-hidden">To</span><input type="date" name="to" value="{{ sc.choice.period.last|iso }}"></label>
     </span>
-    {% if sc.choice.key != 'all' %}
-      <label class="range-field">
-        <span class="visually-hidden">Compare with</span>
-        <select name="compare" data-auto-submit>
-          {% for key, name in COMPARES %}<option value="{{ key }}"{% if key == sc.choice.compare_key %} selected{% endif %}>{{ 'Compare to ' ~ name|lower if key != 'none' else name }}</option>{% endfor %}
-        </select>
-      </label>
-    {% endif %}
-    {% for name, plural, everything in (('region', 'regions', 'All regions'), ('channel', 'channels', 'All channels'), ('category', 'categories', 'All categories')) %}
-      {% if name in show and sc.options[plural]|length > 1 %}
+    {# The comparison and the filters. On a phone they fold behind a Filters button (app.js closes the
+       panel there); on a computer they sit in the row. Without JavaScript the panel stays open. #}
+    {% set active = sc.chosen|length + (1 if sc.choice.compare_key not in ('previous',) and sc.choice.key != 'all' else 0) %}
+    {% set has_more = sc.choice.key != 'all' or show|select('in', ('region', 'channel', 'category'))|list|length > 0 %}
+    {% if has_more %}
+    <details class="more-filters" data-more-filters open>
+      <summary class="button button-quiet more-filters-button">{{ icon('filter', 16) }} Filters{% if active %} <span class="filter-count">{{ active }}</span>{% endif %}</summary>
+      <div class="more-filters-body">
+      {% if sc.choice.key != 'all' %}
         <label class="range-field">
-          <span class="visually-hidden">{{ name|capitalize }}</span>
-          <select name="{{ name }}" data-auto-submit>
-            <option value="">{{ everything }}</option>
-            {% for id_, label in sc.options[plural] %}<option value="{{ id_ }}"{% if sc.chosen.get(name, (none,))[0] == id_ %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          <span class="visually-hidden">Compare with</span>
+          <select name="compare" data-auto-submit>
+            {% for key, name in COMPARES %}<option value="{{ key }}"{% if key == sc.choice.compare_key %} selected{% endif %}>{{ 'Compare to ' ~ name|lower if key != 'none' else name }}</option>{% endfor %}
           </select>
         </label>
       {% endif %}
-    {% endfor %}
+      {% for name, plural, everything in (('region', 'regions', 'All regions'), ('channel', 'channels', 'All channels'), ('category', 'categories', 'All categories')) %}
+        {% if name in show and sc.options[plural]|length > 1 %}
+          <label class="range-field">
+            <span class="visually-hidden">{{ name|capitalize }}</span>
+            <select name="{{ name }}" data-auto-submit>
+              <option value="">{{ everything }}</option>
+              {% for id_, label in sc.options[plural] %}<option value="{{ id_ }}"{% if sc.chosen.get(name, (none,))[0] == id_ %} selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+          </label>
+        {% endif %}
+      {% endfor %}
+      </div>
+    </details>
+    {% endif %}
     <button class="button button-quiet" type="submit" data-apply-button>Apply</button>
   </form>
   <p class="range-line">

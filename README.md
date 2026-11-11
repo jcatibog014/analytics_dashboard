@@ -29,7 +29,7 @@ It is a learning project. The skills are **SQL aggregation**, **performance** an
 - **Compare** with the period before, or with the same dates last year.
 - A **chart** of revenue, orders, profit, average order or customers, by day, week or month, with a **7-day average** and the earlier period behind it. Move the mouse (or the arrow keys) to read every day.
 - Sales by **category**, **region** and **channel**, and the **top products**.
-- **Filter** everything by region, channel or category. Every chart has **View as table**.
+- **Filter** everything by region, channel or category. On a phone, the comparison and the filters fold behind a **Filters** button (with a count of the ones in use), so the numbers come first. Every chart has **View as table**.
 
 **Look closer**
 
