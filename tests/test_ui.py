@@ -59,3 +59,22 @@ def test_on_a_phone_the_filters_fold_behind_a_button(app, owner):
     plain = owner.get("/").get_data(as_text=True)
     assert "filter-count" not in plain
     assert ".more-filters::details-content" in CSS and "max-width: 39.99rem" in CSS
+
+
+def test_the_demo_is_a_badge_and_its_welcome_a_message_that_fades(client):
+    response = post(client, "/demo")
+    page = client.get(response.headers["Location"]).get_data(as_text=True)
+    # The welcome pops up once, as a message that fades by itself (with a close button).
+    assert 'class="toast"' in page and "Welcome!" in page and "data-toast-close" in page
+    # After that, only the small badge in the menu; tapping it tells what the demo is.
+    assert "demo-bar" not in page and 'class="demo-badge"' in page and "deleted 2 hours" in page
+    page = client.get("/settings").get_data(as_text=True)
+    assert "Welcome!" not in page and 'class="demo-badge"' in page
+    # Good news fades; an error stays until it is closed.
+    assert "toast-out 0.3s ease-in 8s forwards" in CSS
+    assert ".toast-error { border-left-color: var(--danger); animation: toast-in 0.2s ease-out; }" in CSS
+
+
+def test_the_owner_has_no_demo_badge(owner):
+    page = owner.get("/").get_data(as_text=True)
+    assert "demo-badge" not in page.split("</aside>")[0]

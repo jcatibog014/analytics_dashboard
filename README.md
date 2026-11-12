@@ -102,7 +102,7 @@ On a million order lines ([docs/BENCHMARKS.md](docs/BENCHMARKS.md), SQLite on a 
 
 ## Try the Demo
 
-Press **Try the demo** on the login page. You get your own copy of **Kape Corner**, a made-up coffee business with 15 months of sales, for 2 hours. Nobody else sees it. Import a file, revert it, set goals, save reports: it is all yours. Switch on Developer mode in Settings to see the Performance Lab. All names in it are made up.
+Press **Try the demo** on the login page. You get your own copy of **Kape Corner**, a made-up coffee business with 15 months of sales, for 2 hours. Nobody else sees it. Import a file, revert it, set goals, save reports: it is all yours. Switch on Developer mode in Settings to see the Performance Lab. A small **Demo** badge at the top of the menu reminds you; tap it to read what the demo is. All names in it are made up.
 
 ## Put It on Your Phone
 
