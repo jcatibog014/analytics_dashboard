@@ -51,18 +51,18 @@
       {% if has_page('explore.products') %}<a href="{{ sc.url('explore.products') }}">All products {{ icon('chevron-right', 14) }}</a>{% endif %}
     </div>
     <div class="table-wrap">
-      <table class="rank-table">
+      <table class="rank-table rank-list">
         <thead><tr><th class="num">#</th><th>Product</th><th class="num">Revenue</th><th class="share-col">Share of revenue</th><th class="num">Units</th><th class="num">Gross profit</th>{% if sc.choice.compare %}<th class="num">Change</th>{% endif %}</tr></thead>
         <tbody>
         {% for row in top_products %}
           <tr>
-            <td class="num muted">{{ row.place }}</td>
+            <td class="num muted rank-place">{{ row.place }}</td>
             <td class="main-cell">{% if has_page('explore.product') %}<a href="{{ sc.url('explore.product', product_id=row.id) }}">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %} <span class="muted small">{{ row.sku }}</span></td>
-            <td class="num">{{ row.revenue|money }}</td>
+            <td class="num rank-revenue">{{ row.revenue|money }}</td>
             <td class="share-col"><span class="share"><svg class="share-bar" aria-hidden="true"><rect class="share-track" width="100%" height="100%" rx="3"></rect><rect class="share-fill" width="{{ (row.share * 100)|round(1) }}%" height="100%" rx="3"></rect></svg><span class="num">{{ row.share|percent }}</span></span></td>
-            <td class="num">{{ row.units|number }}</td>
-            <td class="num">{{ row.profit|money }}</td>
-            {% if sc.choice.compare %}<td class="num">{% if row.change is none %}<span class="muted">New</span>{% else %}{% if row.change|abs < 0.005 %}<span class="muted">0%</span>{% else %}<span class="{{ 'good' if row.change > 0 else 'bad' }}">{{ '%+.0f'|format(row.change * 100) }}%</span>{% endif %}{% endif %}</td>{% endif %}
+            <td class="num rank-extra" data-label="Units">{{ row.units|number }}</td>
+            <td class="num rank-extra" data-label="Gross profit">{{ row.profit|money }}</td>
+            {% if sc.choice.compare %}<td class="num rank-extra" data-label="Change">{% if row.change is none %}<span class="muted">New</span>{% else %}{% if row.change|abs < 0.005 %}<span class="muted">0%</span>{% else %}<span class="{{ 'good' if row.change > 0 else 'bad' }}">{{ '%+.0f'|format(row.change * 100) }}%</span>{% endif %}{% endif %}</td>{% endif %}
           </tr>
         {% endfor %}
         </tbody>

@@ -685,6 +685,27 @@ td.main-cell { font-weight: 600; }
 @media (max-width: 40rem) { .only-wide { display: none; } .only-narrow { display: block; } }
 .chart-note { color: var(--muted); font-size: 0.8125rem; margin-top: 0.25rem; }
 .rank-table { min-width: 44rem; }
+/* On a phone, Top Products and the Products page don't scroll sideways: each product is a
+   short block. Rank, name and revenue first, the share bar under them, then the other numbers
+   as small labelled values (data-label). */
+@media (max-width: 39.99rem) {
+  .rank-list { min-width: 0; }
+  .rank-list thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .rank-list tbody tr {
+    position: relative; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.375rem 0.875rem;
+    padding: 0.75rem 1.25rem 0.75rem 2.75rem; border-bottom: 1px solid var(--border);
+  }
+  .rank-list tbody tr:last-child { border-bottom: 0; }
+  .rank-list tbody td { display: block; padding: 0; border: 0; background: none !important; }
+  .rank-list .rank-place { position: absolute; left: 1.25rem; top: 0.75rem; }
+  .rank-list .main-cell { flex: 1 1 0; min-width: 0; }
+  .rank-list .rank-revenue { flex: none; font-weight: 650; }
+  .rank-list .share-col { flex: 1 0 100%; width: auto; order: 1; }
+  .rank-list .rank-extra { order: 2; }  /* Category (Products page) goes under the bar too */
+  /* Three to a line, label over value, so the columns line up from one product to the next. */
+  .rank-list .rank-extra { flex: 1 0 28%; font-size: 0.8125rem; text-align: left; white-space: nowrap; }
+  .rank-list .rank-extra::before { content: attr(data-label); display: block; font-size: 0.75rem; color: var(--muted); }
+}
 .chart-svg:focus-visible { outline-offset: 4px; }
 .chart-svg .grid { stroke: var(--chart-grid); stroke-width: 1; }
 .chart-svg .baseline { stroke: var(--border-strong); stroke-width: 1; }

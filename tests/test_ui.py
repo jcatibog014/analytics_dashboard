@@ -78,3 +78,14 @@ def test_the_demo_is_a_badge_and_its_welcome_a_message_that_fades(client):
 def test_the_owner_has_no_demo_badge(owner):
     page = owner.get("/").get_data(as_text=True)
     assert "demo-badge" not in page.split("</aside>")[0]
+
+
+def test_on_a_phone_top_products_fit_without_scrolling_sideways(app, owner):
+    post(owner, "/import/sample")
+    for url in ("/", "/products"):
+        page = owner.get(url).get_data(as_text=True)
+        # Each number carries its own label, shown above it on a phone (the header row is hidden there).
+        assert 'class="rank-table rank-list"' in page and 'data-label="Units"' in page
+        assert 'data-label="Gross profit"' in page and 'class="num rank-revenue"' in page
+    assert ".rank-list { min-width: 0; }" in CSS
+    assert ".rank-list .rank-extra::before { content: attr(data-label);" in CSS

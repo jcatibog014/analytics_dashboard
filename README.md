@@ -29,7 +29,7 @@ It is a learning project. The skills are **SQL aggregation**, **performance** an
 - **Compare** with the period before, or with the same dates last year.
 - A **chart** of revenue, orders, profit, average order or customers, by day, week or month, with a **7-day average** and the earlier period behind it. Move the mouse (or the arrow keys) to read every day.
 - Sales by **category**, **region** and **channel**, and the **top products**.
-- **Filter** everything by region, channel or category. On a phone, the comparison and the filters fold behind a **Filters** button (with a count of the ones in use), so the numbers come first. Every chart has **View as table**.
+- **Filter** everything by region, channel or category. On a phone, the comparison and the filters fold behind a **Filters** button (with a count of the ones in use), so the numbers come first. Every chart has **View as table**. On a phone, Top Products and the Products page show each product as a short block, so nothing scrolls sideways.
 
 **Look closer**
 
@@ -78,6 +78,7 @@ On a million order lines ([docs/BENCHMARKS.md](docs/BENCHMARKS.md), SQLite on a 
 | Dashboard (dark mode), 12 months vs last year | ![The dashboard in dark mode](docs/screenshots/dashboard-dark.png) |
 | Filtered by a region | ![The dashboard for Metro Manila only](docs/screenshots/dashboard-filtered.png) |
 | On a phone | ![The dashboard on a phone](docs/screenshots/phone-dashboard.png) |
+| Top Products on a phone | ![Top Products on a phone: one short block per product, no sideways scrolling](docs/screenshots/phone-top-products.png) |
 | The menu on a phone | ![The menu open on a phone](docs/screenshots/phone-menu.png) |
 | Products | ![Categories and every product](docs/screenshots/products.png) |
 | One category | ![The products of Coffee Beans](docs/screenshots/category.png) |
