@@ -36,6 +36,7 @@ PAGES = [
     ("dashboard-full.png", "/", "light", DESKTOP, "full"),
     ("dashboard-filtered.png", "{region:Metro Manila}", "light", DESKTOP, ""),
     ("phone-dashboard.png", "/", "light", PHONE, ""),
+    ("phone-top-products.png", "/", "light", PHONE, "top-products"),
     ("products.png", "/products?range=90d", "light", DESKTOP, ""),
     ("category.png", "{category:Coffee Beans}", "light", DESKTOP, ""),
     ("product.png", "{product}", "light", DESKTOP, "hover-chart"),
@@ -131,6 +132,8 @@ def main():
             if action == "hover-chart":
                 box = page.locator(".only-wide .chart-svg").first.bounding_box()
                 page.mouse.move(box["x"] + box["width"] * 0.72, box["y"] + box["height"] * 0.45)
+            if action == "top-products":
+                page.locator("h2", has_text="Top Products").evaluate("h => window.scrollTo(0, h.getBoundingClientRect().top + window.scrollY - 24)")
             if action == "open-menu":
                 page.get_by_role("button", name="Menu").click()
             page.screenshot(path=OUT / name, full_page=action == "full")

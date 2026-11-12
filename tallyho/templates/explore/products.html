@@ -31,21 +31,21 @@
     </div>
     {% if rows %}
       <div class="table-wrap">
-        <table class="rank-table">
+        <table class="rank-table rank-list">
           <thead><tr><th class="num">#</th><th>Product</th><th>Category</th><th class="num">Revenue</th><th class="share-col">Share of revenue</th><th class="num">Units</th><th class="num">Orders</th><th class="num">Gross profit</th><th class="num">Margin</th>{% if sc.choice.compare %}<th class="num">Change</th>{% endif %}</tr></thead>
           <tbody>
           {% for row in rows %}
             <tr>
-              <td class="num muted">{{ row.place }}</td>
+              <td class="num muted rank-place">{{ row.place }}</td>
               <td class="main-cell"><a href="{{ sc.url('explore.product', product_id=row.id) }}">{{ row.name }}</a> <span class="muted small">{{ row.sku }}</span></td>
-              <td class="nowrap">{{ row.category }}</td>
-              <td class="num">{{ row.revenue|money }}</td>
+              <td class="nowrap rank-extra" data-label="Category">{{ row.category }}</td>
+              <td class="num rank-revenue">{{ row.revenue|money }}</td>
               <td class="share-col"><span class="share"><svg class="share-bar" aria-hidden="true"><rect class="share-track" width="100%" height="100%" rx="3"></rect><rect class="share-fill" width="{{ (row.share * 100)|round(1) }}%" height="100%" rx="3"></rect></svg><span class="num">{{ row.share|percent }}</span></span></td>
-              <td class="num">{{ row.units|number }}</td>
-              <td class="num">{{ row.orders|number }}</td>
-              <td class="num">{{ row.profit|money }}</td>
-              <td class="num">{{ row.margin|percent }}</td>
-              {% if sc.choice.compare %}<td class="num">{% if row.change is none %}<span class="muted">New</span>{% elif row.change|abs < 0.005 %}<span class="muted">0%</span>{% else %}<span class="{{ 'good' if row.change > 0 else 'bad' }}">{{ '%+.0f'|format(row.change * 100) }}%</span>{% endif %}</td>{% endif %}
+              <td class="num rank-extra" data-label="Units">{{ row.units|number }}</td>
+              <td class="num rank-extra" data-label="Orders">{{ row.orders|number }}</td>
+              <td class="num rank-extra" data-label="Gross profit">{{ row.profit|money }}</td>
+              <td class="num rank-extra" data-label="Margin">{{ row.margin|percent }}</td>
+              {% if sc.choice.compare %}<td class="num rank-extra" data-label="Change">{% if row.change is none %}<span class="muted">New</span>{% elif row.change|abs < 0.005 %}<span class="muted">0%</span>{% else %}<span class="{{ 'good' if row.change > 0 else 'bad' }}">{{ '%+.0f'|format(row.change * 100) }}%</span>{% endif %}</td>{% endif %}
             </tr>
           {% endfor %}
           </tbody>
