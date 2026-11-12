@@ -203,6 +203,10 @@ class Order(Base):
         Index("ix_orders_workspace_day_customer", "workspace_id", "order_date", "customer_id"),
         # New and returning customers: "this customer's orders, by date".
         Index("ix_orders_workspace_customer_day", "workspace_id", "customer_id", "order_date"),
+        # Deleting a customer (a demo being cleaned up) makes the database look for that
+        # customer's orders. Without an index starting with customer_id it reads every order
+        # for every customer, and holds the lock for minutes (migration 0008).
+        Index("ix_orders_customer", "customer_id"),
         {"sqlite_autoincrement": True},
     )
 
@@ -235,6 +239,7 @@ class OrderLine(Base):
     __table_args__ = (
         UniqueConstraint("order_id", "line_no"),
         Index("ix_order_lines_workspace_product", "workspace_id", "product_id"),
+        Index("ix_order_lines_product", "product_id"),  # the same, for deleting a product
         {"sqlite_autoincrement": True},
     )
 

@@ -57,6 +57,14 @@ function setUpPopovers() {
   });
 }
 
+// A message's close button (good news also fades by itself, in style.css).
+function setUpToasts() {
+  document.querySelectorAll("[data-toast-close]").forEach((button) => {
+    button.hidden = false;
+    button.addEventListener("click", () => button.closest(".toast").remove());
+  });
+}
+
 function setUpConfirm() {
   document.querySelectorAll("form[data-confirm]").forEach((form) => {
     form.addEventListener("submit", (event) => {
@@ -148,6 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setUpDropZone();
   setUpMenu();
   setUpPopovers();
+  setUpToasts();
   setUpConfirm();
   setUpAutoSubmit();
 });

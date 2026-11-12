@@ -1,4 +1,5 @@
 <!doctype html>
+{% from "_icons.html" import icon %}
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -25,15 +26,18 @@
     {% block sidebar %}{% if g.user %}{% include "_sidebar.html" %}{% endif %}{% endblock %}
     <main id="main" class="page {% block page_class %}{% endblock %}">
       {% block notes %}
-      {% if g.user and g.user.is_demo %}
-        <div class="demo-bar">
-          <p><strong>Demo</strong> Sample sales for a made-up shop, just for you. Import files, set goals, save reports: it is all deleted after 2 hours.</p>
-        </div>
-      {% endif %}
+      {# Messages pop up at the bottom right. Good news fades away by itself (style.css, no
+         JavaScript needed); an error stays until it is closed. The demo's own explanation is the
+         welcome message here, and the Demo badge in the menu shows it again. #}
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-          <div class="flashes" role="status">
-            {% for category, message in messages %}<p class="flash{% if category == 'error' %} flash-error{% endif %}">{{ message }}</p>{% endfor %}
+          <div class="toasts" role="status">
+            {% for category, message in messages %}
+              <div class="toast{% if category == 'error' %} toast-error{% endif %}">
+                <p>{{ message }}</p>
+                <button class="toast-close" type="button" data-toast-close hidden aria-label="Close">{{ icon('x', 14) }}</button>
+              </div>
+            {% endfor %}
           </div>
         {% endif %}
       {% endwith %}

@@ -426,13 +426,55 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); width
   border-left: 3px solid var(--accent);
 }
 .flash-error { background: var(--danger-soft); border-left-color: var(--danger); }
-.demo-bar {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.375rem 0.75rem;
-  margin-bottom: 1rem; padding: 0.375rem 0.875rem; border-radius: var(--radius);
-  background: var(--demo-bg); border: 1px solid var(--demo-border); font-size: 0.8125rem;
-}
-.demo-bar strong { color: var(--warning); margin-right: 0.375rem; }
 
+/* Messages pop up at the bottom right. Good news fades after 8 s (paused while the mouse or
+   focus is on it); an error stays until it is closed. CSS only, so it works without JavaScript. */
+.toasts {
+  position: fixed; z-index: 60; right: 1rem; bottom: 1rem; display: grid; gap: 0.5rem;
+  width: min(24rem, calc(100vw - 2rem));
+}
+.toast {
+  display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.75rem 0.5rem 0.75rem 0.875rem;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent); border-radius: var(--radius); box-shadow: var(--shadow-lifted);
+  font-size: 0.875rem; animation: toast-in 0.2s ease-out, toast-out 0.3s ease-in 8s forwards;
+}
+.toast p { flex: 1; padding-right: 0.25rem; }
+.toast:hover, .toast:focus-within { animation-play-state: paused; }
+.toast-error { border-left-color: var(--danger); animation: toast-in 0.2s ease-out; }
+.toast-close {
+  flex: none; display: inline-grid; place-items: center; width: 1.75rem; height: 1.75rem; margin: -0.25rem 0;
+  border: 0; border-radius: var(--radius-small); background: transparent; color: var(--muted); cursor: pointer; padding: 0;
+}
+.toast-close:hover { background: var(--surface-2); color: var(--text); }
+@keyframes toast-in { from { opacity: 0; transform: translateY(0.5rem); } }
+@keyframes toast-out { to { opacity: 0; transform: translateY(0.5rem); visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: toast-out 0.01s linear 8s forwards; }
+  .toast-error { animation: none; }
+}
+
+/* The Demo badge: next to the name on a computer, next to the theme button on a phone.
+   Tapping it opens a short note under the top bar. */
+.sidebar-top { position: relative; }
+.demo-badge > summary {
+  display: inline-flex; align-items: center; height: 1.375rem; padding: 0 0.5rem; border-radius: 999px;
+  background: var(--demo-bg); border: 1px solid var(--demo-border); color: var(--warning);
+  font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  cursor: pointer; list-style: none; user-select: none;
+}
+.demo-badge > summary::-webkit-details-marker { display: none; }
+.demo-badge > summary:hover { border-color: var(--warning); }
+.demo-note {
+  position: absolute; z-index: 40; top: calc(100% + 0.25rem); left: 0.75rem; right: 0.75rem;
+  padding: 0.75rem 0.875rem; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-lifted); font-size: 0.8125rem; color: var(--text);
+}
+@media (min-width: 56rem) {
+  .sidebar-top { justify-content: flex-start; gap: 0.375rem; }
+  .sidebar-tools { display: contents; }
+  .sidebar-tools .theme-button { margin-left: auto; }
+}
 .empty-state {
   display: grid; justify-items: center; gap: 0.5rem; text-align: center;
   padding: 3rem 1rem; color: var(--muted);
@@ -787,7 +829,7 @@ td.main-cell { font-weight: 600; }
 
 .print-only { display: none; }
 @media print {
-  .sidebar, .no-print, .demo-bar, .flashes, .app-footer, .head-actions, .table-view summary, .range-bar { display: none !important; }
+  .sidebar, .no-print, .toasts, .demo-badge, .app-footer, .head-actions, .table-view summary, .range-bar { display: none !important; }
   .app { display: block; background: none; }
   .page { padding: 0; max-width: none; }
   body { background: #fff; color: #000; font-size: 11pt; }

@@ -13,6 +13,17 @@
   <div class="sidebar-top">
     <a class="logo" href="{{ url_for('main.home') }}">{{ logo() }} <span>{{ APP_NAME }}</span></a>
     <div class="sidebar-tools">
+      {# On a computer the badge sits next to the name; on a phone, next to the theme button
+         (style.css). Tapping it shows what the demo is. #}
+      {% if g.user.is_demo %}
+        <details class="demo-badge" data-popover>
+          <summary title="What is the demo?">Demo</summary>
+          <div class="demo-note">
+            <p><strong>This is a demo.</strong> Sample sales for a made-up shop, just for you. Import files,
+              set goals, save reports: it is all deleted 2 hours after you started.</p>
+          </div>
+        </details>
+      {% endif %}
       {# Light or dark in one click (JavaScript only; Settings has the same choice, with Device too). #}
       <button class="theme-button" type="button" data-theme-button hidden title="Switch to dark mode" aria-label="Switch to dark mode">
         <span class="icon-moon">{{ icon('moon', 17) }}</span><span class="icon-sun">{{ icon('sun', 17) }}</span>

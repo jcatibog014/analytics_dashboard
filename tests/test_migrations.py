@@ -1,7 +1,7 @@
 """The Alembic migrations make exactly the tables that models.py describes."""
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
-from sqlalchemy import inspect
+from sqlalchemy import PrimaryKeyConstraint, UniqueConstraint, inspect
 
 from tallyho import create_app, db
 from tallyho.db import Base
@@ -28,3 +28,23 @@ def test_upgrade_db_command(tmp_path):
     result = app.test_cli_runner().invoke(args=["upgrade-db"])
     assert result.exit_code == 0, result.output
     assert "up to date" in result.output
+
+
+# Parents with only a handful of rows per workspace: checking them reads the child table a
+# few times at most, so their links don't need an index of their own.
+FEW_ROWS = {"regions", "channels", "users", "categories", "alert_rules", "imports"}
+
+
+def test_links_to_many_rows_have_an_index():
+    """Deleting a workspace (a demo) deletes thousands of customers and products. For each one
+    the database looks for rows that point at it, which reads the whole child table unless an
+    index starts with that column. That once held the database locked for minutes."""
+    missing = []
+    for table in Base.metadata.sorted_tables:
+        firsts = {next(iter(index.columns)).name for index in table.indexes}
+        firsts |= {next(iter(c.columns)).name for c in table.constraints
+                   if isinstance(c, (UniqueConstraint, PrimaryKeyConstraint)) and c.columns}
+        for key in table.foreign_keys:
+            if key.column.table.name not in FEW_ROWS and key.parent.name not in firsts:
+                missing.append(f"{table.name}.{key.parent.name}")
+    assert missing == []
