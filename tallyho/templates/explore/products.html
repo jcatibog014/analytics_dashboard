@@ -22,11 +22,12 @@
     </section>
   {% endif %}
 
-  <section class="section">
+  {# The sort tabs end in #product-list, so the new page opens at the list, not at the top. #}
+  <section class="section" id="product-list">
     <div class="section-head">
       <h2>{{ plural(rows|length, 'Product') }}</h2>
       <nav class="segmented" aria-label="Sort by">
-        {% for key, name in sorts %}<a href="{{ sc.url(none, {'sort': key if key != 'revenue' else none}) }}"{% if key == sort %} aria-current="true"{% endif %}>{{ name }}</a>{% endfor %}
+        {% for key, name in sorts %}<a href="{{ sc.url(none, {'sort': key if key != 'revenue' else none}) }}#product-list"{% if key == sort %} aria-current="true"{% endif %}>{{ name }}</a>{% endfor %}
       </nav>
     </div>
     {% if rows %}

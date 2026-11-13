@@ -685,6 +685,7 @@ td.main-cell { font-weight: 600; }
 @media (max-width: 40rem) { .only-wide { display: none; } .only-narrow { display: block; } }
 .chart-note { color: var(--muted); font-size: 0.8125rem; margin-top: 0.25rem; }
 .rank-table { min-width: 44rem; }
+#product-list { scroll-margin-top: 1rem; }  /* a little space above the list after a sort */
 /* On a phone, Top Products and the Products page don't scroll sideways: each product is a
    short block. Rank, name and revenue first, the share bar under them, then the other numbers
    as small labelled values (data-label). */
