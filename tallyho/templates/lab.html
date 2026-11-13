@@ -5,7 +5,7 @@
 {% block title %}Performance Lab - {{ APP_NAME }}{% endblock %}
 {% macro ms(value) %}{% if value is none %}&mdash;{% elif value < 10 %}{{ '%.2f'|format(value) }} ms{% else %}{{ '%.1f'|format(value) }} ms{% endif %}{% endmacro %}
 {% block content %}
-  {{ page_head('Performance Lab', 'The same questions asked in different ways, timed on your own data. Each is the fastest of 3 runs.') }}
+  {{ page_head('Performance Lab') }}
 
   <section class="card">
     <div class="card-head"><h2>Your Data</h2><p>How many rows each table has for this business</p></div>

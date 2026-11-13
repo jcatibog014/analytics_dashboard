@@ -5,7 +5,7 @@
 {% block title %}80/20 Products - {{ APP_NAME }}{% endblock %}
 {% block content %}
   <a class="back-link no-print" href="{{ url_for('reports.index') }}">{{ icon('chevron-left', 16) }} Reports</a>
-  {{ page_head('80/20 Products', 'Often a few products bring in most of the money. Here is how few.') }}
+  {{ page_head('80/20 Products') }}
   <div class="no-print">{{ filter_bar(sc, show=('region', 'channel', 'category')) }}</div>
 
   {% if result.rows %}

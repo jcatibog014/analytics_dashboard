@@ -5,7 +5,7 @@
 {% block head %}<script src="{{ url_for('static', filename='charts.js') }}" defer></script>{% endblock %}
 {% block content %}
   <a class="back-link no-print" href="{{ url_for('reports.index') }}">{{ icon('chevron-left', 16) }} Reports</a>
-  {{ page_head('Customer Cohorts', 'Each row is the customers whose first order was in that month. Each column says how many of them ordered again 1, 2, 3 months later.') }}
+  {{ page_head('Customer Cohorts') }}
 
   <form method="get" class="range-bar no-print">
     <label class="range-field">

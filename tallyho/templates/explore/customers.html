@@ -6,7 +6,7 @@
 {% block title %}Customers - {{ APP_NAME }}{% endblock %}
 {% block head %}<script src="{{ url_for('static', filename='charts.js') }}" defer></script>{% endblock %}
 {% block content %}
-  {{ page_head('Customers', 'Who buys, who is new, who comes back, and when they shop.') }}
+  {{ page_head('Customers') }}
   {{ filter_bar(sc) }}
 
   {% call kpi_row(cards, sc, now, label='Customers') %}

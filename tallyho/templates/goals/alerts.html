@@ -3,7 +3,7 @@
 {% from "_icons.html" import icon %}
 {% block title %}Alerts - {{ APP_NAME }}{% endblock %}
 {% block content %}
-  {% call page_head('Alerts', 'Days that were far from the usual for that weekday. Checked after every import and every hour.') %}
+  {% call page_head('Alerts') %}
     {% if unseen %}
       <form method="post" action="{{ url_for('goals.mark_seen') }}">{{ csrf() }}<button class="button button-quiet" type="submit">{{ icon('check', 16) }} Mark all as read</button></form>
     {% endif %}

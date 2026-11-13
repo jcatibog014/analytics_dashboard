@@ -75,9 +75,8 @@ def product(product_id):
     old = analytics.kpis(s, before) if before else None
     cards = analytics.pick(analytics.kpi_cards(now, old),
                            ("revenue", "orders", "units", "profit", "customers", "new_customers"))
-    average_price = now["revenue"] / now["units"] if now["units"] else None
     return render_template(
-        "explore/product.html", sc=sc, product=item, now=now, cards=cards, average_price=average_price,
+        "explore/product.html", sc=sc, product=item, now=now, cards=cards,
         trend=trend_for(s, sc, f, before),
         regions=bars_for(s, sc, f, "region", lambda row: sc.url(region=row["id"])),
         channels=bars_for(s, sc, f, "channel", lambda row: sc.url(channel=row["id"])),

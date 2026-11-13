@@ -30,11 +30,11 @@
 {% endmacro %}
 
 {# The page title row: title (and a lead line) on the left, actions on the right. #}
-{% macro page_head(title, lead=None) %}
+{# Just the title (and buttons): no line of text under it, the user's choice. #}
+{% macro page_head(title) %}
   <div class="page-head">
     <div>
       <h1>{{ title }}</h1>
-      {% if lead %}<p class="lead">{{ lead }}</p>{% endif %}
     </div>
     {% if caller %}<div class="head-actions">{{ caller() }}</div>{% endif %}
   </div>

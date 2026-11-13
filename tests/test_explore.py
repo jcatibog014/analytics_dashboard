@@ -48,7 +48,7 @@ def test_product_page(stocked, owner):
     product_id = ids(stocked, Product, "sku")["BN-ESP-1KG"]
     page = owner.get(f"/products/{product_id}").get_data(as_text=True)
     for text in ("Espresso Roast Beans 1kg", "Coffee Beans", "Revenue by day", "By Region", "By Channel",
-                 "Top Buyers", "Average price"):
+                 "Top Buyers"):
         assert text in page, text
     assert owner.get("/products/99999").status_code == 404
 

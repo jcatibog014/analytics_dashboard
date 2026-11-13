@@ -1,4 +1,5 @@
 """The look and the words from the UI review: logo colours, labels, the theme button, Settings."""
+import re
 from pathlib import Path
 
 from .conftest import post
@@ -96,3 +97,27 @@ def test_sorting_products_opens_the_page_at_the_list(app, owner):
     page = owner.get("/products").get_data(as_text=True)
     assert 'id="product-list"' in page
     assert page.count('#product-list"') == 4  # Revenue, Gross profit, Units, Orders
+
+
+def test_titles_have_no_line_of_text_under_them(app, owner):
+    post(owner, "/import/sample")
+    for url in ("/", "/products", "/customers", "/reports", "/reports/cohorts", "/reports/pareto", "/goals",
+                "/alerts", "/import", "/records", "/settings"):
+        assert 'class="lead"' not in owner.get(url).get_data(as_text=True), url
+    assert ".lead" not in CSS
+
+
+def test_facts_that_were_under_titles_moved_into_the_boxes(app, owner):
+    post(owner, "/import/sample")
+    records = owner.get("/records").get_data(as_text=True)
+    order_no = re.search(r'href="/orders/([^"?]+)', records).group(1)
+    order = owner.get(f"/orders/{order_no}").get_data(as_text=True)
+    assert "<span>Date</span>" in order
+    imports = owner.get("/import").get_data(as_text=True)
+    import_id = re.search(r'href="/imports/(\d+)"', imports).group(1)
+    assert "<span>Imported</span>" in owner.get(f"/imports/{import_id}").get_data(as_text=True)
+    customers = owner.get("/customers?range=all").get_data(as_text=True)
+    customer = re.search(r'href="(/customers/\d+)[^"]*"', customers).group(1)
+    page = owner.get(customer).get_data(as_text=True)
+    for words in ("Customer since", "Orders in all", "Spent in all", "Last order"):
+        assert words in page, words

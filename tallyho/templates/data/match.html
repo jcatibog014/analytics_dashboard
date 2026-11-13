@@ -5,7 +5,7 @@
 {% block title %}Map Columns - {{ APP_NAME }}{% endblock %}
 {% block content %}
   {{ import_steps(2) }}
-  {{ page_head('Map Columns', filename ~ ' · ' ~ plural(row_count, 'row')) }}
+  {{ page_head('Map Columns') }}
 
   {% if errors %}
     <div class="form-error" role="alert">{% for error in errors %}<p>{{ error }}</p>{% endfor %}</div>
@@ -25,7 +25,7 @@
   {% endif %}
 
   <section class="section">
-    <div class="section-head"><h2>Your File</h2><p>The first rows, as we read them.</p></div>
+    <div class="section-head"><h2>Your File</h2><p>{{ filename }} &middot; {{ plural(row_count, 'row') }}. The first rows, as we read them.</p></div>
     <div class="table-wrap preview-table">
       <table>
         <thead><tr>{% for header in headers %}<th>{{ header }}</th>{% endfor %}</tr></thead>

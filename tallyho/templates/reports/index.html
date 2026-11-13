@@ -3,7 +3,7 @@
 {% from "_icons.html" import icon %}
 {% block title %}Reports - {{ APP_NAME }}{% endblock %}
 {% block content %}
-  {{ page_head('Reports', 'Build a table of any numbers, save it, print it or download it.') }}
+  {{ page_head('Reports') }}
 
   <div class="grid-3">
     <a class="card report-card" href="{{ url_for('reports.builder', **range_args()) }}">
