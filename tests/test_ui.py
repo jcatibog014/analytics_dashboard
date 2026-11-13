@@ -89,3 +89,10 @@ def test_on_a_phone_top_products_fit_without_scrolling_sideways(app, owner):
         assert 'data-label="Gross profit"' in page and 'class="num rank-revenue"' in page
     assert ".rank-list { min-width: 0; }" in CSS
     assert ".rank-list .rank-extra::before { content: attr(data-label);" in CSS
+
+
+def test_sorting_products_opens_the_page_at_the_list(app, owner):
+    post(owner, "/import/sample")
+    page = owner.get("/products").get_data(as_text=True)
+    assert 'id="product-list"' in page
+    assert page.count('#product-list"') == 4  # Revenue, Gross profit, Units, Orders
