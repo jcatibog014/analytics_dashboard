@@ -60,6 +60,15 @@ def money_scale(top_centavos, ticks=4):
     return top * 100, [v * 100 for v in values]
 
 
+AXIS_FONT = 11   # .axis-text in style.css, in the drawing's own units
+LABEL_GAP = 16   # the least space between two x labels (about two letters)
+
+
+def text_width(text):
+    """About how wide an axis label is: Inter's figures and letters average ~0.6 of the font size."""
+    return len(text) * AXIS_FONT * 0.6
+
+
 def line_chart(points, kind="money", width=1000, height=300, compare=False, average=False, max_labels=8,
                second=False):
     """points: [{"label", "value", "compare"?, "avg"?, "tip"}] in time order.
@@ -104,15 +113,24 @@ def line_chart(points, kind="money", width=1000, height=300, compare=False, aver
         area = f"{main} L{x_at(count - 1):.1f},{y_at(0):.1f} L{x_at(0):.1f},{y_at(0):.1f} Z"
     # X labels: at most about max_labels, evenly spread, always the first and last.
     every = max(1, math.ceil(count / max_labels))
+    if count > 1:
+        # ...and far enough apart for their text. The first label starts at its point, so the
+        # one after it needs its whole width plus half the next one's.
+        widest = max(text_width(p["label"]) for p in points)
+        every = max(every, math.ceil((widest * 1.5 + LABEL_GAP) / (plot_w / (count - 1))))
     x_labels = [{"x": x_at(i), "text": p["label"], "anchor": "middle"}
                 for i, p in enumerate(points) if i % every == 0]
     if x_labels:
         x_labels[0]["anchor"] = "start" if count > 1 else "middle"
         if count > 1 and (count - 1) % every:
-            # The last point always gets a label; drop the one before if they would touch.
-            if (count - 1) % every < every * 0.6:
+            # The last point always gets a label (ending at its point); drop the one before if
+            # the two would touch, measuring the text, not counting points.
+            final = {"x": x_at(count - 1), "text": points[-1]["label"], "anchor": "end"}
+            before = x_labels[-1]
+            before_right = before["x"] + text_width(before["text"]) * (1 if before["anchor"] == "start" else 0.5)
+            if len(x_labels) > 1 and final["x"] - text_width(final["text"]) - before_right < LABEL_GAP:
                 x_labels.pop()
-            x_labels.append({"x": x_at(count - 1), "text": points[-1]["label"], "anchor": "end"})
+            x_labels.append(final)
         elif count > 1:
             x_labels[-1]["anchor"] = "end"
     # Hover columns: each point owns the strip halfway to its neighbours.

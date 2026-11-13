@@ -119,3 +119,21 @@ def test_part_months_are_explained(stocked, owner):
     page = owner.get("/?range=90d&grain=month").get_data(as_text=True)
     assert "only partly inside these dates" in page
     assert "(only " in page  # in the hover text too
+
+
+@pytest.mark.parametrize("label", ["Nov {}", "Q{} 2026"])  # the longest real labels (dialect.bucket_label)
+@pytest.mark.parametrize("wide", [1000, 560])
+def test_date_labels_never_touch(label, wide):
+    """The last date always gets a label. The one before it went when the two were few points
+    apart, but on a phone "Nov 25" and "Nov 30" (30 days) still overlapped. Now the text is measured."""
+    def span(item):
+        width = charts.text_width(item["text"])
+        return {"start": (item["x"], item["x"] + width), "middle": (item["x"] - width / 2, item["x"] + width / 2),
+                "end": (item["x"] - width, item["x"])}[item["anchor"]]
+    for count in range(2, 120):
+        points = [{"label": label.format(i % 30 + 1), "value": i} for i in range(count)]
+        for size, chart in charts.line_charts(points, "number", wide=wide).items():
+            labels = chart["x_labels"]
+            assert labels[-1]["text"] == points[-1]["label"]
+            for first, second in zip(labels, labels[1:]):
+                assert span(second)[0] - span(first)[1] >= charts.LABEL_GAP, (count, size, first, second)
