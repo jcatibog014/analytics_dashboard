@@ -121,3 +121,12 @@ def test_facts_that_were_under_titles_moved_into_the_boxes(app, owner):
     page = owner.get(customer).get_data(as_text=True)
     for words in ("Customer since", "Orders in all", "Spent in all", "Last order"):
         assert words in page, words
+
+
+def test_the_records_search_fits_two_lines_on_a_phone(app, owner):
+    post(owner, "/import/sample")
+    page = owner.get("/records?q=latte").get_data(as_text=True)
+    assert 'class="filter-bar records-search"' in page
+    # The buttons keep their words for screen readers (shown on a computer, hidden on a phone).
+    assert '<span class="button-label">Search</span>' in page and '<span class="button-label">Clear</span>' in page
+    assert ".records-search .field-date { order: 2; flex: 1 1 0;" in CSS

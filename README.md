@@ -96,6 +96,7 @@ On a million order lines ([docs/BENCHMARKS.md](docs/BENCHMARKS.md), SQLite on a 
 | Review before importing | ![New orders, orders already here, problem rows and the first orders](docs/screenshots/import-review.png) |
 | An import with problem rows | ![What was added, and the rows that were left out](docs/screenshots/import-problems.png) |
 | Records | ![Every line, newest first](docs/screenshots/records.png) |
+| Records on a phone | ![The search in two lines on a phone](docs/screenshots/phone-records.png) |
 | One order | ![An order and its lines](docs/screenshots/order.png) |
 | Settings | ![Appearance, profile, weekly email, developer mode, password](docs/screenshots/settings.png) |
 | Developer mode on | ![The Developer mode switch, on](docs/screenshots/settings-developer.png) |

@@ -70,7 +70,9 @@ DEMO_PAGES = {
     "/goals": ["Expected by today", "Cebu", "Other Months"],
     "/alerts": ["the usual", "Rules"],
     "/import": ["Sample data (Kape Corner).csv", "Website orders (fix 2 rows).csv"],
-    "/records": ["KC-", "WEB-9001"],
+    "/records": ["KC-"],
+    # The imported example is yesterday's; on a busy day today's 50+ lines push it to page 2.
+    "/records?q=WEB-9001": ["WEB-9001", "Kape Corner Mug"],
     "/lab": ["Raw Tables or Rollups?", "USING INDEX"],
     "/settings": ["Kape Corner", "disabled"],
 }
