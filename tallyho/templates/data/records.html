@@ -5,22 +5,23 @@
 {% block content %}
   {{ page_head('Records') }}
 
-  <form method="get" class="filter-bar">
-    <label class="field grow">
+  {# Two lines on a phone: the search and its button, then From and To side by side (style.css). #}
+  <form method="get" class="filter-bar records-search">
+    <label class="field grow field-search">
       <span class="field-label">Search</span>
       <input type="search" name="q" value="{{ q }}" placeholder="Order number, product code or name, customer">
     </label>
-    <label class="field">
+    <label class="field field-date field-from">
       <span class="field-label">From</span>
       <input type="date" name="from" value="{{ first|iso if first else '' }}">
     </label>
-    <label class="field">
+    <label class="field field-date field-to">
       <span class="field-label">To</span>
       <input type="date" name="to" value="{{ last|iso if last else '' }}">
     </label>
     <div class="filter-actions">
-      {% if q or first or last %}<a class="button button-quiet" href="{{ url_for('data.records') }}">Clear</a>{% endif %}
-      <button class="button" type="submit">{{ icon('search', 16) }} Search</button>
+      {% if q or first or last %}<a class="button button-quiet" href="{{ url_for('data.records') }}" title="Clear the search">{{ icon('x', 16) }}<span class="button-label">Clear</span></a>{% endif %}
+      <button class="button" type="submit" title="Search">{{ icon('search', 16) }}<span class="button-label">Search</span></button>
     </div>
   </form>
 

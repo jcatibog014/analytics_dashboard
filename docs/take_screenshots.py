@@ -54,6 +54,7 @@ PAGES = [
     ("import-review.png", "{review}", "light", DESKTOP, "full"),
     ("import-problems.png", "{problem-import}", "light", DESKTOP, ""),
     ("records.png", "/records", "light", DESKTOP, ""),
+    ("phone-records.png", "/records?q=latte", "light", PHONE, ""),
     ("order.png", "/orders/WEB-9001", "light", DESKTOP, ""),
     ("settings-developer.png", "/settings", "light", DESKTOP, "developer-on"),
     ("lab.png", "/lab?range=90d", "light", DESKTOP, "full"),
