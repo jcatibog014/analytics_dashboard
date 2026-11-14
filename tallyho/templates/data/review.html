@@ -5,7 +5,7 @@
 {% block title %}Review the Import - {{ APP_NAME }}{% endblock %}
 {% block content %}
   {{ import_steps(3) }}
-  {{ page_head('Review the Import', filename ~ ' · nothing is saved until you press Import') }}
+  {{ page_head('Review the Import') }}
 
   <div class="stat-row">
     <div class="stat"><span>New orders</span><strong>{{ summary.new|number }}</strong><small>{{ plural(summary.lines, 'line') }} in the file</small></div>

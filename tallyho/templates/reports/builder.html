@@ -5,7 +5,7 @@
 {% block title %}{{ saved.name if saved else title }} - {{ APP_NAME }}{% endblock %}
 {% block content %}
   <a class="back-link no-print" href="{{ url_for('reports.index') }}">{{ icon('chevron-left', 16) }} Reports</a>
-  {% call page_head(saved.name if saved else title, (title if saved else none)) %}
+  {% call page_head(saved.name if saved else title) %}
     <a class="button button-quiet" href="{{ url_for('reports.builder', format='csv', **args) }}">{{ icon('download', 16) }} CSV</a>
     <a class="button button-quiet" href="{{ url_for('reports.builder', format='xlsx', **args) }}">{{ icon('download', 16) }} Excel</a>
     <button class="button button-quiet" type="button" data-print hidden>{{ icon('print', 16) }} Print</button>

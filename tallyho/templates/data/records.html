@@ -3,7 +3,7 @@
 {% from "_icons.html" import icon %}
 {% block title %}Records - {{ APP_NAME }}{% endblock %}
 {% block content %}
-  {{ page_head('Records', plural(totals.orders, 'order') ~ ' with ' ~ plural(totals.lines, 'line') ~ ', newest first.') }}
+  {{ page_head('Records') }}
 
   <form method="get" class="filter-bar">
     <label class="field grow">

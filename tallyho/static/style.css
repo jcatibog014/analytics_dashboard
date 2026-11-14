@@ -318,7 +318,6 @@ html:not(.js) .sidebar-menu { display: block; }
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1rem;
   margin-bottom: 1.25rem;
 }
-.page-head .lead { color: var(--muted); margin-top: 0.25rem; }
 .head-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 .kicker { font-size: 0.75rem; font-weight: 650; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
 .section { margin-top: 1.75rem; }
@@ -587,6 +586,7 @@ td.main-cell { font-weight: 600; }
 .needs-list li.muted svg { color: var(--muted); }
 
 .stat-row { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
+.stat-row-spaced { margin-bottom: 1.25rem; }  /* a customer's all-time numbers, above the date menu */
 .stat {
   display: grid; gap: 0.125rem; align-content: start; padding: 0.875rem 1rem;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);

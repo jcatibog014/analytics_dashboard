@@ -11,9 +11,15 @@
       {{ avatar(person) }}
       <div>
         <h1>{{ person.name }}</h1>
-        <p class="lead">{% if person.first_order_date %}Customer since {{ person.first_order_date|nice_date }} &middot; {{ plural(ever[0], 'order') }} in all, {{ ever[1]|money }}{% if ever[2] %}, last on {{ ever[2]|nice_date }}{% endif %}{% else %}No orders yet{% endif %}</p>
       </div>
     </div>
+  </div>
+  {# All time, whatever dates are picked below. #}
+  <div class="stat-row stat-row-spaced">
+    <div class="stat"><span>Customer since</span><strong class="stat-text">{{ person.first_order_date|nice_date if person.first_order_date else '—' }}</strong></div>
+    <div class="stat"><span>Orders in all</span><strong>{{ ever[0]|number }}</strong></div>
+    <div class="stat"><span>Spent in all</span><strong>{{ ever[1]|money }}</strong></div>
+    <div class="stat"><span>Last order</span><strong class="stat-text">{{ ever[2]|nice_date if ever[2] else '—' }}</strong></div>
   </div>
   {{ filter_bar(sc, show=()) }}
 

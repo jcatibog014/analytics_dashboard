@@ -8,9 +8,9 @@
 {% block content %}
   {% if 'category' in sc.chosen %}
     <nav class="breadcrumbs" aria-label="You are here"><a href="{{ sc.url('explore.products', category=none) }}">Products</a> {{ icon('chevron-right', 14) }} <span>{{ sc.chosen.category[1] }}</span></nav>
-    {{ page_head(sc.chosen.category[1], 'Every product in this category, best first.') }}
+    {{ page_head(sc.chosen.category[1]) }}
   {% else %}
-    {{ page_head('Products', 'Pick a category or a product to see more.') }}
+    {{ page_head('Products') }}
   {% endif %}
   {{ filter_bar(sc, {'sort': sort if sort != 'revenue' else none}) }}
 

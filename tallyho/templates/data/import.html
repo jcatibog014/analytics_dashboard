@@ -5,7 +5,7 @@
 {% block title %}{{ record.filename }} - {{ APP_NAME }}{% endblock %}
 {% block content %}
   {% if just_done %}{{ import_steps(4) }}{% else %}<a class="back-link" href="{{ url_for('data.imports') }}">{{ icon('chevron-left', 16) }} Import</a>{% endif %}
-  {% call page_head(record.filename, 'Imported ' ~ (record.created_at|nice_datetime) ~ (' by ' ~ record.user.name if record.user else '')) %}
+  {% call page_head(record.filename) %}
     {% if record.status == 'done' %}
       <form method="post" action="{{ url_for('data.undo', import_id=record.id) }}" data-confirm="Revert this import? Its {{ record.orders_added|number }} orders will be deleted, and this can't be undone.">
         {{ csrf() }}
@@ -17,14 +17,14 @@
   {% endcall %}
 
   <div class="stat-row">
+    <div class="stat"><span>Imported</span><strong class="stat-text">{{ record.created_at|nice_datetime }}</strong>
+      <small>{% if record.user %}by {{ record.user.name }}, {% endif %}in {{ '%.1f'|format(record.seconds) }} s</small></div>
     <div class="stat"><span>Orders added</span><strong>{{ record.orders_added|number }}</strong></div>
     <div class="stat"><span>Lines added</span><strong>{{ record.lines_added|number }}</strong></div>
     <div class="stat"><span>Already here</span><strong>{{ (record.orders_skipped + record.orders_replaced)|number }}</strong>
       <small>{% if record.mode == 'replace' %}replaced{% else %}skipped{% endif %}</small></div>
     <div class="stat"><span>Problem rows</span><strong>{{ record.rows_failed|number }}</strong></div>
     <div class="stat"><span>Sales dates</span><strong class="stat-text">{% if record.first_day %}{{ date_range(record.first_day, record.last_day) }}{% else %}&mdash;{% endif %}</strong></div>
-    <div class="stat"><span>Time taken</span><strong>{{ '%.1f'|format(record.seconds) }} s</strong>
-      {% if record.seconds and record.rows_read %}<small>{{ (record.rows_read / record.seconds)|round|int|number }} rows a second</small>{% endif %}</div>
   </div>
 
   {% if record.no_cost %}

@@ -4,9 +4,11 @@
 {% block title %}Order {{ order.order_no }} - {{ APP_NAME }}{% endblock %}
 {% block content %}
   <a class="back-link" href="{{ url_for('data.records') }}">{{ icon('chevron-left', 16) }} Records</a>
-  {{ page_head('Order ' ~ order.order_no, (order.order_date|nice_date) ~ ((' at ' ~ '%02d'|format(order.order_hour) ~ ':00') if order.order_hour is not none else '')) }}
+  {{ page_head('Order ' ~ order.order_no) }}
 
   <div class="stat-row">
+    <div class="stat"><span>Date</span><strong class="stat-text">{{ order.order_date|nice_date }}</strong>
+      {% if order.order_hour is not none %}<small>at {{ '%02d'|format(order.order_hour) }}:00</small>{% endif %}</div>
     <div class="stat"><span>Revenue</span><strong>{{ order.revenue|money_cents }}</strong></div>
     <div class="stat"><span>Profit</span><strong>{{ (order.revenue - order.cost)|money_cents }}</strong></div>
     <div class="stat"><span>Customer</span><strong class="stat-text">{% if order.customer %}{{ order.customer.name }}{% else %}&mdash;{% endif %}</strong>

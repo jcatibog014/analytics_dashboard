@@ -9,7 +9,7 @@
   <span class="pill pill-{{ tone }}">{{ icon(icon_name, 12) }} {{ name }}</span>
 {% endmacro %}
 {% block content %}
-  {{ page_head('Goals', 'Set a target for the month. Pace follows your usual week, so a slow Monday is not a worry.') }}
+  {{ page_head('Goals') }}
 
   <h2 class="section-title">{{ this_month|month_name }}</h2>
   {% if current %}

@@ -19,7 +19,7 @@ def test_login_and_logout(app, client):
     assert response.status_code == 302
     assert is_logged_in(client)
     page = client.get("/").get_data(as_text=True)
-    assert "Hello, Olivia." in page
+    assert "Olivia" in page  # in the menu, next to Settings
     post(client, "/logout")
     assert not is_logged_in(client)
 
