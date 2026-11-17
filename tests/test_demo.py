@@ -166,3 +166,14 @@ def test_shift_for_moves_by_whole_weeks():
     assert demo.shift_for(date(2026, 3, 10), date(2026, 3, 11)) == 7
     assert demo.shift_for(date(2026, 3, 10), date(2026, 3, 24)) == 14
     assert demo.shift_for(date(2026, 3, 16), date(2026, 3, 10)) == 0
+
+
+def test_goal_targets_work_with_postgresql_decimals():
+    """PostgreSQL returns SUM() of a BIGINT column as a Decimal; the live demo crashed on
+    Decimal * 1.08 (SQLite returns an int, so the tests didn't see it)."""
+    from decimal import Decimal
+
+    from tallyho.demo import goal_targets
+    assert goal_targets(Decimal("63123456"), 812) == goal_targets(63123456, 812) == {
+        "revenue": 68100000, "orders": 852, "cebu": 10700000, "last_month": 59967283}
+    assert goal_targets(None, 0) == {"revenue": 100000, "orders": 10, "cebu": 100000, "last_month": 100000}
