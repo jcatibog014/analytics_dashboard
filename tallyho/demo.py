@@ -120,6 +120,20 @@ WEB-9004,31/02/2026,SN-MNG-200,Dried Mango 200g,Snacks,3,180.00,95.00,C-00021,Jo
 """
 
 
+def goal_targets(revenue, orders):
+    """The demo's goals, from last month's revenue (centavos) and orders.
+
+    int() first: PostgreSQL gives SUM() of a BIGINT column back as a Decimal, and a Decimal
+    can't be multiplied by a float like 1.08 (SQLite gives an int, so only the live site broke)."""
+    revenue, orders = int(revenue or 0), int(orders or 0)
+    return {
+        "revenue": max(int(revenue * 1.08) // 100000 * 100000, 100000),
+        "orders": max(int(orders * 1.05), 10),
+        "cebu": max(int(revenue * 0.17) // 100000 * 100000, 100000),
+        "last_month": max(int(revenue * 0.95), 100000),
+    }
+
+
 def fill_extras(s, workspace, user, now_day):
     """The rest of the demo, so no page is empty: a small import with problem rows,
     goals, alert rules (and the alerts they find), and saved reports."""
@@ -139,15 +153,14 @@ def fill_extras(s, workspace, user, now_day):
     typical = s.execute(text("SELECT COALESCE(SUM(revenue), 0), COUNT(*) FROM orders WHERE workspace_id = :w "
                              "AND order_date >= :first AND order_date < :month"),
                         {"w": workspace.id, "first": last_month, "month": month}).one()
-    month_revenue = max(int(typical[0] * 1.08) // 100000 * 100000, 100000)
+    targets = goal_targets(*typical)
     region = s.execute(text("SELECT id FROM regions WHERE workspace_id = :w AND name = 'Cebu'"),
                        {"w": workspace.id}).scalar()
     s.add_all([
-        Goal(workspace_id=workspace.id, measure="revenue", month=month, target=month_revenue),
-        Goal(workspace_id=workspace.id, measure="orders", month=month, target=max(int(typical[1] * 1.05), 10)),
-        Goal(workspace_id=workspace.id, measure="revenue", month=month, region_id=region,
-             target=max(int(typical[0] * 0.17) // 100000 * 100000, 100000)),
-        Goal(workspace_id=workspace.id, measure="revenue", month=last_month, target=max(int(typical[0] * 0.95), 100000)),
+        Goal(workspace_id=workspace.id, measure="revenue", month=month, target=targets["revenue"]),
+        Goal(workspace_id=workspace.id, measure="orders", month=month, target=targets["orders"]),
+        Goal(workspace_id=workspace.id, measure="revenue", month=month, region_id=region, target=targets["cebu"]),
+        Goal(workspace_id=workspace.id, measure="revenue", month=last_month, target=targets["last_month"]),
         AlertRule(workspace_id=workspace.id, measure="revenue", direction="drop", percent=25),
         AlertRule(workspace_id=workspace.id, measure="orders", direction="rise", percent=35),
         SavedReport(workspace_id=workspace.id, user_id=user.id, name="Monthly sales by category",
