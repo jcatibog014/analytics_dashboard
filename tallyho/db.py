@@ -69,7 +69,30 @@ def make_engine(url):
         def turn_on_foreign_keys(dbapi_connection, _record):
             # SQLite ignores FOREIGN KEY rules unless asked, per connection.
             dbapi_connection.execute("PRAGMA foreign_keys = ON")
+    elif engine.dialect.name == "postgresql":
+        @event.listens_for(engine, "connect")
+        def plain_numbers(dbapi_connection, _record):
+            # PostgreSQL's SUM() of a BIGINT and AVG() give "numeric", which psycopg turns into
+            # Decimal. Decimal * 1.08 is a TypeError, and the code (and its tests, on SQLite)
+            # expect int and float. So read numeric the way SQLite gives it.
+            dbapi_connection.adapters.register_loader("numeric", PlainNumberLoader)
     return engine
+
+
+try:
+    from psycopg.adapt import Loader
+except ImportError:  # psycopg is only needed for PostgreSQL
+    Loader = object
+
+
+class PlainNumberLoader(Loader):
+    """A PostgreSQL numeric as an int when it is whole ("123"), else a float ("12.5")."""
+    def load(self, data):
+        text = bytes(data).decode()
+        try:
+            return int(text)
+        except ValueError:
+            return float(text)  # also "NaN" and "Infinity"
 
 
 def time_queries(engine):
