@@ -48,3 +48,18 @@ def test_links_to_many_rows_have_an_index():
             if key.column.table.name not in FEW_ROWS and key.parent.name not in firsts:
                 missing.append(f"{table.name}.{key.parent.name}")
     assert missing == []
+
+
+def test_postgresql_numbers_come_back_as_int_and_float():
+    """On the live site SUM(BIGINT) came back as a Decimal and Decimal * 1.08 crashed Try the
+    demo. The engine reads PostgreSQL's numeric as int (whole) or float, like SQLite."""
+    import math
+
+    from tallyho.db import PlainNumberLoader, make_engine
+    loader = PlainNumberLoader(0)
+    assert loader.load(b"63123456") == 63123456 and isinstance(loader.load(b"63123456"), int)
+    assert loader.load(memoryview(b"-12")) == -12
+    assert loader.load(b"9017636.571428571") == 9017636.571428571
+    assert math.isnan(loader.load(b"NaN"))
+    engine = make_engine("postgresql+psycopg://user:secret@localhost/none")  # doesn't connect yet
+    assert any(getattr(fn, "__name__", "") == "plain_numbers" for fn in engine.pool.dispatch.connect)
